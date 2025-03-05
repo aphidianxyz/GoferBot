@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"io"
@@ -10,7 +11,7 @@ import (
 	"strings"
 
 	telebot "github.com/go-telegram-bot-api/telegram-bot-api"
-	//magick "gopkg.in/gographics/imagick.v3/imagick"
+	magick "gopkg.in/gographics/imagick.v3/imagick"
 )
 
 // todo: main loop has too many responsibilities rn
@@ -96,7 +97,7 @@ func main() {
             tokens := strings.Split(msg.Caption, " ")
             commandName := tokens[0]
             if commandName[0] != '/' { // since we can't check if a caption is a command w/ tg API
-                break
+                continue
             }
             commandParams := tokens[1:]
             switch commandName {
@@ -109,20 +110,26 @@ func main() {
                 photos := *msg.Photo
                 // msg.Photo is a slice of PhotoSizes from the TG API which are offerings of the same
                 // photo in various sizes
-                targetFileID := photos[0].FileID
+                targetFileID := photos[1].FileID
                 targetFileURL, err := bot.GetFileDirectURL(targetFileID)
                 if err != nil {
                     failedImgDownloadError := "Failed to get URL to download image - " + err.Error()
                     msgConfig = telebot.NewMessage(msg.Chat.ID, failedImgDownloadError)
                     break
                 }
-                img, err := DownloadImage(targetFileURL)
+                imgFilePath, err := DownloadImage(targetFileURL)
                 if err != nil {
                     failedDownloadError := "Failed to download image - " + err.Error()
                     msgConfig = telebot.NewMessage(msg.Chat.ID, failedDownloadError)
                     break
                 }
-                ready := fmt.Sprintf("Image downloaded and ready to caption: %v", img)
+                ready := fmt.Sprintf("Image downloaded and ready to caption: %v", imgFilePath)
+                err = CaptionImage(imgFilePath, commandParams[0], commandParams[1])
+                if err != nil {
+                    failedToCaptionImg := "Failed to caption image - " + err.Error()
+                    msgConfig = telebot.NewMessage(msg.Chat.ID, failedToCaptionImg)
+                    break
+                }
                 msgConfig = telebot.NewMessage(msg.Chat.ID, ready)
             default:
                 msgConfig = telebot.NewMessage(msg.Chat.ID, "Unknown command")
@@ -167,13 +174,67 @@ func DownloadImage(url string) (filepath string, err error) {
     file, err := os.Create(filepath)
     if err != nil {
         log.Println("Failed to download image: " + err.Error())
+        return "", err 
     }
     defer file.Close()
 
     _, err = io.Copy(file, response.Body)
     if err != nil {
         log.Printf("Failed to write image to disk: %e", err)
+        return "", err
     }
     
     return filepath, nil
+}
+
+func CaptionImage(filepath, topText, botText string) error {
+    if topText == "" && botText == "" {
+        return errors.New("No captions provided")
+    }
+
+    magick.Initialize()
+    defer magick.Terminate()
+    mWand := magick.NewMagickWand()
+    defer mWand.Destroy()
+    dWand := magick.NewDrawingWand()
+    defer dWand.Destroy()
+
+    err := mWand.ReadImage(filepath)
+    if err != nil {
+        return errors.New("Imagemagick failed to read image @ " + filepath + ". Error: " + err.Error())
+    }
+
+    // transparent bg
+    emptyPWand := magick.NewPixelWand()
+    emptyPWand.SetColor("none")
+    defer emptyPWand.Destroy()
+    mWand.SetImageBackgroundColor(emptyPWand)
+
+    // init impact font meme text 
+    whitePWand := magick.NewPixelWand()
+    defer whitePWand.Destroy()
+    whitePWand.SetColor("white")
+    blackPWand := magick.NewPixelWand()
+    defer blackPWand.Destroy()
+    blackPWand.SetColor("black")
+    dWand.SetFont("Impact")
+    dWand.SetFillColor(whitePWand)
+    dWand.SetStrokeColor(blackPWand)
+    dWand.SetStrokeWidth(2.0) // TODO: don't hardcode these vals
+    dWand.SetFontSize(20)
+
+    // Draw captions
+    dWand.SetGravity(magick.GRAVITY_NORTH)
+    dWand.Annotation(0, 0, "Top")
+    dWand.SetGravity(magick.GRAVITY_SOUTH)
+    dWand.Annotation(0, 0, "Bot")
+
+    // Paste caption to image
+    mWand.DrawImage(dWand)
+
+    if err := mWand.WriteImage(filepath); err != nil {
+        return errors.New("Failed to write captions to original image: " + err.Error())
+    }
+    
+    return nil
 }
