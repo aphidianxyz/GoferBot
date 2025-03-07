@@ -91,12 +91,17 @@ func main() {
                 msgConfig.ReplyToMessageID = msg.MessageID
             }
             bot.Send(msgConfig)
-        } else if msg.Photo != nil { // for commands that have an attached photo, since any text attached w/ a photo
-                                     // is not considered as text (so we can't check if it's a cmd), but a caption
+        } else if msg.Photo != nil { // for commands that have an attached photo; any text attached w/ a photo
+                                     // is considered as a caption (so we can't check if it's a cmd)
             var msgConfig telebot.MessageConfig
             tokens := strings.Split(msg.Caption, " ")
             commandName := tokens[0]
+            if len(commandName) == 0 {
+                log.Print("no command")
+                continue
+            }
             if commandName[0] != '/' { // since we can't check if a caption is a command w/ tg API
+                log.Print("not a command")
                 continue
             }
             commandParams := tokens[1:]
@@ -196,45 +201,49 @@ func CaptionImage(filepath, topText, botText string) error {
     defer magick.Terminate()
     mWand := magick.NewMagickWand()
     defer mWand.Destroy()
-    dWand := magick.NewDrawingWand()
-    defer dWand.Destroy()
-
-    err := mWand.ReadImage(filepath)
-    if err != nil {
+    if err := mWand.ReadImage(filepath); err != nil {
         return errors.New("Imagemagick failed to read image @ " + filepath + ". Error: " + err.Error())
     }
 
-    // transparent bg
-    emptyPWand := magick.NewPixelWand()
-    emptyPWand.SetColor("none")
-    defer emptyPWand.Destroy()
-    mWand.SetImageBackgroundColor(emptyPWand)
+    // top caption
+    // captions should be bounded by original image's dimensions
+    topCaptionWand, err := DrawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/4, topText, true)
+    if err != nil {
+        return errors.New("Failed to draw top caption")
+    }
+    mWand.CompositeImageGravity(topCaptionWand, magick.COMPOSITE_OP_OVER, magick.GRAVITY_NORTH)
 
-    // init impact font meme text 
-    whitePWand := magick.NewPixelWand()
-    defer whitePWand.Destroy()
-    whitePWand.SetColor("white")
-    blackPWand := magick.NewPixelWand()
-    defer blackPWand.Destroy()
-    blackPWand.SetColor("black")
-    dWand.SetFont("Impact")
-    dWand.SetFillColor(whitePWand)
-    dWand.SetStrokeColor(blackPWand)
-    dWand.SetStrokeWidth(2.0) // TODO: don't hardcode these vals
-    dWand.SetFontSize(20)
-
-    // Draw captions
-    dWand.SetGravity(magick.GRAVITY_NORTH)
-    dWand.Annotation(0, 0, "Top")
-    dWand.SetGravity(magick.GRAVITY_SOUTH)
-    dWand.Annotation(0, 0, "Bot")
-
-    // Paste caption to image
-    mWand.DrawImage(dWand)
+    // bot caption
+    botCaptionWand, err := DrawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/4, botText, false)
+    if err != nil {
+        return errors.New("Failed to draw top caption")
+    }
+    mWand.CompositeImageGravity(botCaptionWand, magick.COMPOSITE_OP_OVER, magick.GRAVITY_SOUTH)
 
     if err := mWand.WriteImage(filepath); err != nil {
         return errors.New("Failed to write captions to original image: " + err.Error())
     }
     
     return nil
+}
+
+func DrawCaption(width, height uint, text string, top bool) (*magick.MagickWand, error) {
+    wand := magick.NewMagickWand()
+    wand.SetSize(width, height)
+    wand.SetFont("Impact")
+    wand.SetOption("stroke", "black")
+    wand.SetOption("strokewidth", "1")
+    wand.SetOption("fill", "white")
+    wand.SetOption("background", "none")
+    var gravity magick.GravityType = magick.GRAVITY_NORTH
+    if !top {
+        gravity = magick.GRAVITY_SOUTH
+    }
+    wand.SetGravity(gravity)
+
+    if err := wand.ReadImage("caption:" + text); err != nil {
+        return nil, errors.New("Failed to draw caption: " + text)
+    }
+
+    return wand, nil
 }
