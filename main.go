@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	telebot "github.com/go-telegram-bot-api/telegram-bot-api"
@@ -129,13 +130,17 @@ func main() {
                     sendConfig = telebot.NewMessage(msg.Chat.ID, failedDownloadError)
                     break
                 }
-                err = CaptionImage(imgFilePath, commandParams[0], commandParams[1])
+                topCaptionText, botCaptionText, err := ParseCaptions(msg.Caption)
+                if err != nil {
+                    sendConfig = telebot.NewMessage(msg.Chat.ID, err.Error())
+                    break
+                }
+                err = CaptionImage(imgFilePath, topCaptionText, botCaptionText)
                 if err != nil {
                     failedToCaptionImg := "Failed to caption image - " + err.Error()
                     sendConfig = telebot.NewMessage(msg.Chat.ID, failedToCaptionImg)
                     break
                 }
-                // delete photo after sending
                 photoConfig := telebot.NewPhotoUpload(msg.Chat.ID, imgFilePath)
                 sendConfig = photoConfig 
                 bot.Send(sendConfig)
@@ -254,4 +259,15 @@ func DrawCaption(width, height uint, text string, top bool) (*magick.MagickWand,
     }
 
     return wand, nil
+}
+
+func ParseCaptions(prompt string) (topCaption, botCaption string, error error) {
+    regex := regexp.MustCompile(`^/caption\s+"([^"]*[a-zA-Z\s\\"]*)"\s+"([^"]*[a-zA-Z\s\\"]*)"$`)
+    captions := regex.FindStringSubmatch(prompt)
+    log.Println(captions)
+    if len(captions) != 3 {
+        return "", "", errors.New("Expected 2 captions, each encapsulated in quotations")
+    }
+    return captions[1], captions[2], nil
+
 }
