@@ -15,161 +15,155 @@ import (
 	magick "gopkg.in/gographics/imagick.v3/imagick"
 )
 
-// todo: main loop has too many responsibilities rn
-func main() {
+type Gofer struct {
+    api *telebot.BotAPI
+}
+
+func (g *Gofer) Initialize() {
     token := os.Getenv("TOKEN")
     bot, err := telebot.NewBotAPI(token)
-
     if err != nil {
         log.Panic("Failed to initialize bot: " + err.Error())
     }
+    g.api = bot
+}
 
-    log.Printf("Authorized on account %s", bot.Self.UserName)
+func (g *Gofer) RenameThis(update telebot.Update) telebot.Chattable {
+    msg := update.Message 
+    editedMsg := update.EditedMessage
+    log.Printf("%+v\n", msg)
 
+    if msg == nil {
+        if editedMsg == nil {
+            log.Println("Invalid message was sent")
+        }
+        log.Println("Message was edited (handle it)")
+    } else if msg.IsCommand() { // commands without a picture
+        tokens := strings.Split(msg.Text, " ")
+        commandName := tokens[0]
+        //commandParams := tokens[1:]
+        var msgConfig telebot.MessageConfig 
+
+        switch commandName {
+        case "/hello":
+            helloString := "Hello, " + msg.Chat.FirstName + "!"
+            msgConfig = telebot.NewMessage(msg.Chat.ID, helloString)
+        default:
+            msgConfig = telebot.NewMessage(msg.Chat.ID, "Unknown command")
+            msgConfig.ReplyToMessageID = msg.MessageID
+        }
+        return msgConfig
+    } else if msg.Photo != nil { // for commands that have an attached photo; any text attached w/ a photo
+                                 // is considered as a caption (so we can't check if it's a cmd)
+        var sendConfig telebot.Chattable
+        tokens := strings.Split(msg.Caption, " ")
+        commandName := tokens[0]
+        if len(commandName) == 0 {
+            return nil
+        }
+        if commandName[0] != '/' { // since we can't check if a caption is a command w/ tg API
+            return nil
+        }
+        commandParams := tokens[1:]
+        switch commandName {
+        case "/caption": 
+            if len(commandParams) < 1 {
+                helpString := `Correct usage: /caption ["Top Text"] ["Bottom Text"] (Brackets not included)`
+                sendConfig = telebot.NewMessage(msg.Chat.ID, helpString)
+                break
+            }
+            photos := *msg.Photo
+            // msg.Photo is a slice of PhotoSizes from the TG API which are offerings of the same
+            // photo in various sizes
+            // TODO: find biggest photo in PhotoSizes
+            targetFileID := photos[1].FileID
+            targetFileURL, err := g.api.GetFileDirectURL(targetFileID)
+            if err != nil {
+                failedImgDownloadError := "Failed to get URL to download image - " + err.Error()
+                sendConfig = telebot.NewMessage(msg.Chat.ID, failedImgDownloadError)
+                break
+            }
+            imgFilePath, err := DownloadImage(targetFileURL)
+            if err != nil {
+                failedDownloadError := "Failed to download image - " + err.Error()
+                sendConfig = telebot.NewMessage(msg.Chat.ID, failedDownloadError)
+                break
+            }
+            topCaptionText, botCaptionText, err := ParseCaptions(msg.Caption)
+            if err != nil {
+                sendConfig = telebot.NewMessage(msg.Chat.ID, err.Error())
+                break
+            }
+            err = CaptionImage(imgFilePath, topCaptionText, botCaptionText)
+            if err != nil {
+                failedToCaptionImg := "Failed to caption image - " + err.Error()
+                sendConfig = telebot.NewMessage(msg.Chat.ID, failedToCaptionImg)
+                break
+            }
+            photoConfig := telebot.NewPhotoUpload(msg.Chat.ID, imgFilePath)
+            sendConfig = photoConfig 
+            // need a way to delete
+            return sendConfig
+        default:
+            msgConfig := telebot.NewMessage(msg.Chat.ID, "Unknown command")
+            msgConfig.ReplyToMessageID = msg.MessageID
+            sendConfig = msgConfig
+        }
+        return sendConfig
+    } else { // non-commands, but we can generate replies to certain keywords in chat
+        if msg.Text == "goat" {
+            photoConfig := telebot.NewPhotoUpload(msg.Chat.ID, "./goat.jpg")
+            photoConfig.Caption = "Did someone say GOAT???"
+            photoConfig.ReplyToMessageID = msg.MessageID
+
+            return photoConfig
+        } else {
+            log.Println("[", msg.From.UserName, "]", msg.Text)
+
+            msgConfig := telebot.NewMessage(msg.Chat.ID, msg.Text)
+            msgConfig.ReplyToMessageID = msg.MessageID
+
+            return msgConfig
+        }
+    }
+    return nil
+}
+
+func (g *Gofer) Update(timeout int) {
     updateConfig := telebot.NewUpdate(0)
-    updateConfig.Timeout = 60
+    updateConfig.Timeout = timeout 
 
-    updates, err := bot.GetUpdatesChan(updateConfig)
+    updates, err := g.api.GetUpdatesChan(updateConfig)
     if err != nil {
         log.Panic("Failed to get updates: " + err.Error())
     }
 
     for update := range updates {
-        msg := update.Message 
-        editedMsg := update.EditedMessage
-        log.Printf("%+v\n", msg)
-
-        if msg == nil {
-            if editedMsg == nil {
-                log.Println("Invalid message was sent")
-            }
-            log.Println("Message was edited (handle it)")
+        msg := update.Message
+        edit := update.EditedMessage // edit is nil when message isn't and vice-versa
+        if msg == nil && edit == nil {
             continue
-        } else if msg.IsCommand() { // commands without a picture
-            tokens := strings.Split(msg.Text, " ")
-            commandName := tokens[0]
-            //commandParams := tokens[1:]
-            var msgConfig telebot.MessageConfig 
-
-            switch commandName {
-            case "/hello":
-                helloString := "Hello, " + msg.Chat.FirstName + "!"
-                msgConfig = telebot.NewMessage(msg.Chat.ID, helloString)
-            /*
-            // TODO: write /caption for URLs
-            case "/caption": 
-                if len(commandParams) < 1 {
-                    helpString := `Correct usage: /caption [Image URL] ["Top Text"] ["Bottom Text"] (Brackets not included)`
-                    msgConfig = telebot.NewMessage(msg.Chat.ID, helpString)
-                    break
-                }
-                if msg.Photo == nil || msg.ReplyToMessage.Photo == nil {
-                    noImageError := "No image was given to caption!"
-                    msgConfig = telebot.NewMessage(msg.Chat.ID, noImageError)
-                    break
-                }
-                photos := *msg.Photo
-                // TODO: handle operations on whole photo albums
-                targetFileID := photos[0].FileID
-                targetFileURL, err := bot.GetFileDirectURL(targetFileID)
-                if err != nil {
-                    failedImgDownloadError := "Failed to get URL to download image - " + err.Error()
-                    msgConfig = telebot.NewMessage(msg.Chat.ID, failedImgDownloadError)
-                    break
-                }
-                img, err := DownloadImage(targetFileURL)
-                if err != nil {
-                    failedDownloadError := "Failed to download image - " + err.Error()
-                    msgConfig = telebot.NewMessage(msg.Chat.ID, failedDownloadError)
-                    break
-                }
-
-                ready := fmt.Sprintf("Image downloaded and ready to caption: %v", img)
-                msgConfig = telebot.NewMessage(msg.Chat.ID, ready)
-            */ 
-            default:
-                msgConfig = telebot.NewMessage(msg.Chat.ID, "Unknown command")
-                msgConfig.ReplyToMessageID = msg.MessageID
-            }
-            bot.Send(msgConfig)
-        } else if msg.Photo != nil { // for commands that have an attached photo; any text attached w/ a photo
-                                     // is considered as a caption (so we can't check if it's a cmd)
-            var sendConfig telebot.Chattable
-            tokens := strings.Split(msg.Caption, " ")
-            commandName := tokens[0]
-            if len(commandName) == 0 {
-                log.Print("no command")
+        } else if msg.IsCommand() {
+            command := ParseMsgCommand(msg)
+            if err := command.GenerateMessage(); err != nil {
+                errorMessage := telebot.NewMessage(msg.Chat.ID, "Error: " + err.Error())
+                g.api.Send(errorMessage)
                 continue
             }
-            if commandName[0] != '/' { // since we can't check if a caption is a command w/ tg API
-                log.Print("not a command")
+            if err := command.SendMessage(g.api); err != nil {
+                errorMessage := telebot.NewMessage(msg.Chat.ID, "Error: " + err.Error())
+                g.api.Send(errorMessage)
                 continue
             }
-            commandParams := tokens[1:]
-            switch commandName {
-            case "/caption": 
-                if len(commandParams) < 1 {
-                    helpString := `Correct usage: /caption ["Top Text"] ["Bottom Text"] (Brackets not included)`
-                    sendConfig = telebot.NewMessage(msg.Chat.ID, helpString)
-                    break
-                }
-                photos := *msg.Photo
-                // msg.Photo is a slice of PhotoSizes from the TG API which are offerings of the same
-                // photo in various sizes
-                // TODO: find biggest photo in PhotoSizes
-                targetFileID := photos[1].FileID
-                targetFileURL, err := bot.GetFileDirectURL(targetFileID)
-                if err != nil {
-                    failedImgDownloadError := "Failed to get URL to download image - " + err.Error()
-                    sendConfig = telebot.NewMessage(msg.Chat.ID, failedImgDownloadError)
-                    break
-                }
-                imgFilePath, err := DownloadImage(targetFileURL)
-                if err != nil {
-                    failedDownloadError := "Failed to download image - " + err.Error()
-                    sendConfig = telebot.NewMessage(msg.Chat.ID, failedDownloadError)
-                    break
-                }
-                topCaptionText, botCaptionText, err := ParseCaptions(msg.Caption)
-                if err != nil {
-                    sendConfig = telebot.NewMessage(msg.Chat.ID, err.Error())
-                    break
-                }
-                err = CaptionImage(imgFilePath, topCaptionText, botCaptionText)
-                if err != nil {
-                    failedToCaptionImg := "Failed to caption image - " + err.Error()
-                    sendConfig = telebot.NewMessage(msg.Chat.ID, failedToCaptionImg)
-                    break
-                }
-                photoConfig := telebot.NewPhotoUpload(msg.Chat.ID, imgFilePath)
-                sendConfig = photoConfig 
-                bot.Send(sendConfig)
-                os.Remove(imgFilePath)
-                continue
-            default:
-                msgConfig := telebot.NewMessage(msg.Chat.ID, "Unknown command")
-                msgConfig.ReplyToMessageID = msg.MessageID
-                sendConfig = msgConfig
-            }
-            bot.Send(sendConfig)
-        } else { // non-commands, but we can generate replies to certain keywords in chat
-            if msg.Text == "goat" {
-                photoConfig := telebot.NewPhotoUpload(msg.Chat.ID, "./goat.jpg")
-                photoConfig.Caption = "Did someone say GOAT???"
-                photoConfig.ReplyToMessageID = msg.MessageID
-
-                bot.Send(photoConfig)
-            } else {
-                log.Println("[", msg.From.UserName, "]", msg.Text)
-
-                msgConfig := telebot.NewMessage(msg.Chat.ID, msg.Text)
-                msgConfig.ReplyToMessageID = msg.MessageID
-
-                bot.Send(msgConfig)
-            }
-        }
+        } 
     }
+}
 
+// todo: main loop has too many responsibilities rn
+func main() {
+    gofer := Gofer{}
+    gofer.Initialize()
+    gofer.Update(60)
 }
 
 func DownloadImage(url string) (filepath string, err error) {
