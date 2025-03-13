@@ -19,9 +19,14 @@ func ParseMsgCommand(msg *telebot.Message) Command {
     commandParams := tokens[1:]
     switch commandName {
     case "/hello": // TODO: utilize enums
-        return &HelloCommand{chatID: msg.Chat.ID}
+        return &HelloCommand{chatID: msg.Chat.ID, firstName: msg.From.FirstName, lastName: msg.From.LastName, userName: msg.From.UserName}
     case "/help":
-        helpRequest := commandParams[0]
+        var helpRequest string
+        if len(commandParams) < 1 {
+            helpRequest = ""
+        } else {
+            helpRequest = commandParams[0]
+        }
         // TODO: maybe make /help DM the requesting user instead 
         return &HelpCommand{chatID: msg.Chat.ID, request: helpRequest}
     default:
@@ -57,13 +62,14 @@ type HelpCommand struct {
 
 func (hc *HelpCommand) GenerateMessage() error {
     var config telebot.MessageConfig
-    switch hc.request {
+    request := strings.TrimPrefix(hc.request, "/")
+    switch request {
     case "":
-    // TODO: general description
+        config = telebot.NewMessage(hc.chatID, "all commands: ...")
     case "hello":
-        config = telebot.NewMessage(hc.chatID, "/hello -- Gofer says hello to you!")
+        config = telebot.NewMessage(hc.chatID, "/hello - Gofer says hello to you!")
     case "help":
-        helpCommandDesc := "/help [command?] -- Describes command functionality and syntax, specific command can be specified"
+        helpCommandDesc := "/help [command?] - Describes command functionality and syntax, specific command can be specified"
         config = telebot.NewMessage(hc.chatID, helpCommandDesc)
     default:
         invalidCommandMsg := hc.request + " is not a known command"
@@ -82,16 +88,12 @@ func (hc *HelpCommand) SendMessage(api *telebot.BotAPI) error {
 
 type HelloCommand struct {
     chatID int64
-    greetee string
+    firstName, lastName, userName string
     sendConfig telebot.MessageConfig
 }
 
-func (hc *HelloCommand) SetGreetee(greetee string) {
-    hc.greetee = greetee
-}
-
 func (hc *HelloCommand) GenerateMessage() error {
-    helloString := "Hello, " + hc.greetee
+    helloString := "Hello, " + hc.firstName + " " + hc.lastName + "!\nAKA: " + hc.userName 
     config := telebot.NewMessage(hc.chatID, helloString)
     hc.sendConfig = config 
     return nil
