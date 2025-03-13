@@ -5,13 +5,14 @@ import (
 	"os"
 
 	telebot "github.com/go-telegram-bot-api/telegram-bot-api"
+    cmd "github.com/aphidian.xyz/bettergrambot/internals/command"
 )
 
 type Gofer struct {
     api *telebot.BotAPI
 }
 
-func (g *Gofer) Initialize() {
+func (g *Gofer) initialize() {
     token := os.Getenv("TOKEN")
     bot, err := telebot.NewBotAPI(token)
     if err != nil {
@@ -20,7 +21,7 @@ func (g *Gofer) Initialize() {
     g.api = bot
 }
 
-func (g *Gofer) Update(timeout int) {
+func (g *Gofer) update(timeout int) {
     updateConfig := telebot.NewUpdate(0)
     updateConfig.Timeout = timeout 
 
@@ -32,28 +33,35 @@ func (g *Gofer) Update(timeout int) {
     for update := range updates {
         msg := update.Message
         edit := update.EditedMessage // edit is nil when msg isn't and vice-versa
-        if msg == nil && edit == nil {
+        if msg == nil || edit == nil {
             continue
         } else if msg.IsCommand() {
-            command := ParseMsgCommand(msg)
+            command := cmd.ParseMsgCommand(msg)
             if err := command.GenerateMessage(); err != nil {
-                errorMessage := telebot.NewMessage(msg.Chat.ID, "Error: " + err.Error())
-                g.api.Send(errorMessage)
+                sendError(msg.Chat.ID, err.Error(), g.api)
                 continue
             }
             if err := command.SendMessage(g.api); err != nil {
-                errorMessage := telebot.NewMessage(msg.Chat.ID, "Error: " + err.Error())
-                g.api.Send(errorMessage)
+                sendError(msg.Chat.ID, err.Error(), g.api)
                 continue
             }
-        } 
+        } else if msg.Photo != nil { // text accompanied with a picture is considered a caption
+                                     // manual parsing required for commands w/ a picture
+            // TODO:
+            // command := cmd.ParseImgCommand(msg)
+        }
     }
 }
 
-// todo: main loop has too many responsibilities rn
+func sendError(chatID int64, errStr string, api *telebot.BotAPI) {
+    errSuffix := "Error: "
+    errorMessage := telebot.NewMessage(chatID,  errSuffix + errStr)
+    api.Send(errorMessage)
+}
+
 func main() {
     gofer := Gofer{}
-    gofer.Initialize()
-    gofer.Update(60)
+    gofer.initialize()
+    gofer.update(60)
 }
 

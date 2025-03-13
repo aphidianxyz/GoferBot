@@ -1,8 +1,8 @@
 package command
 
 import (
-    "strings"
-    "errors"
+	"errors"
+	"strings"
 
 	telebot "github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -18,12 +18,19 @@ func (hc *HelpCommand) GenerateMessage() error {
     request := strings.TrimPrefix(hc.request, "/")
     switch request {
     case "":
-        config = telebot.NewMessage(hc.chatID, "all commands: ...")
+        var allSyntaxes string
+        for i, syntaxString := range allHelpSyntaxes {
+            if i == len(allHelpSyntaxes) {
+                allSyntaxes += syntaxString 
+            } else {
+                allSyntaxes += syntaxString + "\n"
+            }
+        }
+        config = telebot.NewMessage(hc.chatID, allSyntaxes)
     case "hello":
-        config = telebot.NewMessage(hc.chatID, "/hello - Gofer says hello to you!")
+        config = telebot.NewMessage(hc.chatID, helloSyntax)
     case "help":
-        helpCommandDesc := "/help [command?] - Describes command functionality and syntax, specific command can be specified"
-        config = telebot.NewMessage(hc.chatID, helpCommandDesc)
+        config = telebot.NewMessage(hc.chatID, helpSyntax)
     default:
         invalidCommandMsg := hc.request + " is not a known command"
         config = telebot.NewMessage(hc.chatID, invalidCommandMsg)
