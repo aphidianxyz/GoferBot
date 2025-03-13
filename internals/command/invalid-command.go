@@ -3,7 +3,7 @@ package command
 import (
     "errors"
 
-	telebot "github.com/go-telegram-bot-api/telegram-bot-api"
+	telebot "github.com/OvyFlash/telegram-bot-api"
 )
 
 type InvalidCommand struct {

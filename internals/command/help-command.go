@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	telebot "github.com/go-telegram-bot-api/telegram-bot-api"
+	telebot "github.com/OvyFlash/telegram-bot-api"
 )
 
 type HelpCommand struct {

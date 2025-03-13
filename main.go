@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	telebot "github.com/go-telegram-bot-api/telegram-bot-api"
-    cmd "github.com/aphidian.xyz/bettergrambot/internals/command"
+	telebot "github.com/OvyFlash/telegram-bot-api"
+	cmd "github.com/aphidian.xyz/bettergrambot/internals/command"
 )
 
 type Gofer struct {
@@ -19,21 +19,22 @@ func (g *Gofer) initialize() {
         log.Panic("Failed to initialize bot: " + err.Error())
     }
     g.api = bot
+    log.Println("Bot initialized! Account: " + g.api.Self.UserName)
 }
 
 func (g *Gofer) update(timeout int) {
     updateConfig := telebot.NewUpdate(0)
     updateConfig.Timeout = timeout 
 
-    updates, err := g.api.GetUpdatesChan(updateConfig)
-    if err != nil {
-        log.Panic("Failed to get updates: " + err.Error())
-    }
+    updates := g.api.GetUpdatesChan(updateConfig)
 
     for update := range updates {
         msg := update.Message
         edit := update.EditedMessage // edit is nil when msg isn't and vice-versa
-        if msg == nil || edit == nil {
+        if msg == nil {
+            if edit != nil {
+                handleEdits(&update)
+            }
             continue
         } else if msg.IsCommand() {
             command := cmd.ParseMsgCommand(msg)
@@ -47,15 +48,19 @@ func (g *Gofer) update(timeout int) {
             }
         } else if msg.Photo != nil { // text accompanied with a picture is considered a caption
                                      // manual parsing required for commands w/ a picture
-            // TODO:
-            // command := cmd.ParseImgCommand(msg)
         }
+    }
+}
+
+func handleEdits(update *telebot.Update) {
+    if update.EditedMessage == nil {
+        return
     }
 }
 
 func sendError(chatID int64, errStr string, api *telebot.BotAPI) {
     errSuffix := "Error: "
-    errorMessage := telebot.NewMessage(chatID,  errSuffix + errStr)
+    errorMessage := telebot.NewMessage(chatID, errSuffix + errStr)
     api.Send(errorMessage)
 }
 
