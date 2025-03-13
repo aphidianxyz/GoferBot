@@ -1,8 +1,2 @@
 github.com/OvyFlash/telegram-bot-api v0.0.0-20241219171906-3f2ca0c14ada h1:5ZtieioZyyfiJsGvjpj3d5Eso/3YjJJhNQ1M8at5U5k=
 github.com/OvyFlash/telegram-bot-api v0.0.0-20241219171906-3f2ca0c14ada/go.mod h1:2nRUdsKyWhvezqW/rBGWEQdcTQeTtnbSNd2dgx76WYA=
-github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible h1:2cauKuaELYAEARXRkq2LrJ0yDDv1rW7+wrTEdVL3uaU=
-github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible/go.mod h1:qf9acutJ8cwBUhm1bqgz6Bei9/C/c93FPDljKWwsOgM=
-github.com/technoweenie/multipartstreamer v1.0.1 h1:XRztA5MXiR1TIRHxH2uNxXxaIkKQDeX7m2XsSOlQEnM=
-github.com/technoweenie/multipartstreamer v1.0.1/go.mod h1:jNVxdtShOxzAsukZwTSw6MDx5eUJoiEBsSvzDU9uzog=
-gopkg.in/gographics/imagick.v3 v3.7.2 h1:PmsYCf60YS/7f1omBTDaoS6yp4817Wv61S0JpWH4cMc=
-gopkg.in/gographics/imagick.v3 v3.7.2/go.mod h1:7I4S9VWdwr88yzYi7g+ZL4H8oZuH9cmSQI7GsZCcYFM=

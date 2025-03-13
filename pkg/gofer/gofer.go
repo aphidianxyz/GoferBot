@@ -5,7 +5,7 @@ import (
 	"os"
 
 	telebot "github.com/OvyFlash/telegram-bot-api"
-	cmd "github.com/aphidian.xyz/bettergrambot/pkg/command"
+	cmd "github.com/aphidianxyz/GoferBot/pkg/command"
 )
 
 type Gofer struct {

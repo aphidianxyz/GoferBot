@@ -1,6 +1,6 @@
 package main
 
-import g "github.com/aphidian.xyz/bettergrambot/pkg/gofer"
+import g "github.com/aphidianxyz/GoferBot/pkg/gofer"
 
 func main() {
     gofer := g.Gofer{}
