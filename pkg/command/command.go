@@ -33,8 +33,7 @@ func ParseMsgCommand(msg *telebot.Message) Command {
         } else {
             helpRequest = commandParams[0]
         }
-        // TODO: maybe make /help DM the requesting user instead 
-        return &HelpCommand{chatID: msg.Chat.ID, request: helpRequest}
+        return &HelpCommand{chatID: msg.From.ID, request: helpRequest}
     default:
         return &InvalidCommand{chatID: msg.Chat.ID, request: commandName}
     }
