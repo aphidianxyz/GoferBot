@@ -32,6 +32,7 @@ func (ci *CaptionImgCommand) GenerateMessage() {
     ci.imgFilePath, err = downloadImage(imgFileURL)
     if err != nil {
         ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error())
+        return
     }
     // get captions
     topCapStr, botCapStr, err := parseCaptions(ci.msg.Caption)
