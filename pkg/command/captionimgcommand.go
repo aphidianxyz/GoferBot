@@ -23,7 +23,7 @@ type CaptionImgCommand struct {
 
 func (ci *CaptionImgCommand) GenerateMessage() {
     // get image from message 
-    imgFileID := ci.msg.Photo[1].FileID // TODO: get largest photo size from msg.Photo
+    imgFileID := getLargestPhotoID(ci.msg.Photo)
     imgFileURL, err := ci.api.GetFileDirectURL(imgFileID)
     if err != nil {
         ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error()) 
@@ -45,7 +45,6 @@ func (ci *CaptionImgCommand) GenerateMessage() {
         ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error())
         return
     }
-
     // generate message
     image := telebot.FilePath(ci.imgFilePath)
     image.UploadData()
@@ -62,6 +61,19 @@ func (ci *CaptionImgCommand) SendMessage(api *telebot.BotAPI) error {
     }
     os.Remove(ci.imgFilePath)
     return nil
+}
+
+func getLargestPhotoID(photoSizes []telebot.PhotoSize) string {
+    largest := photoSizes[0]
+    for i, photoSize := range photoSizes {
+        if i == 0 {
+            continue
+        }
+        if photoSize.Width > largest.Width || photoSize.Height > largest.Height {
+            largest = photoSize
+        }
+    }
+    return largest.FileID
 }
 
 // TODO: maybe allow these to be public fns, since CaptionCommand will need them
