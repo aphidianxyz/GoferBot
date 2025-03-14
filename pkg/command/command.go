@@ -38,3 +38,7 @@ func ParseMsgCommand(msg *telebot.Message) Command {
         return &InvalidCommand{chatID: msg.Chat.ID, request: commandName}
     }
 } 
+
+func ParseImgCommand(cap *telebot.Message) Command {
+    return &InvalidCommand{}
+}

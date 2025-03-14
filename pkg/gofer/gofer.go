@@ -3,6 +3,7 @@ package gofer
 import (
 	"log"
 	"os"
+	"strings"
 
 	telebot "github.com/OvyFlash/telegram-bot-api"
 	cmd "github.com/aphidianxyz/GoferBot/pkg/command"
@@ -41,15 +42,39 @@ func (g *Gofer) Update(timeout int) {
             if err := command.GenerateMessage(); err != nil {
                 sendError(msg.Chat.ID, err.Error(), g.api)
                 continue
+            } // TODO: this impl currently doesn't support multi-step commands
+            if err := command.SendMessage(g.api); err != nil {
+                sendError(msg.Chat.ID, err.Error(), g.api)
+                continue
+            }
+        } else if msg.Photo != nil { // msg w/ photos have captions, manual parsing required
+            if !isCaptionCommand(msg.Caption) {
+                continue
+            }
+            command := cmd.ParseImgCommand(msg)
+            if err := command.GenerateMessage(); err != nil {
+                sendError(msg.Chat.ID, err.Error(), g.api)
+                continue
             }
             if err := command.SendMessage(g.api); err != nil {
                 sendError(msg.Chat.ID, err.Error(), g.api)
                 continue
             }
-        } else if msg.Photo != nil { // text accompanied with a picture is considered a caption
-                                     // manual parsing required for commands w/ a picture
+        } else {
+            // TODO: handle registered responses
         }
     }
+}
+
+func isCaptionCommand(caption string) bool {
+    tokens := strings.Split(caption, " ")
+    if len(tokens) == 0 {
+        return false
+    }
+    if commandName := tokens[0]; commandName[0] != '/' {
+        return true 
+    }
+    return false
 }
 
 func handleEdits(update *telebot.Update) {
