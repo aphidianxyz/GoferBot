@@ -38,11 +38,9 @@ func (g *Gofer) Update(timeout int) {
             }
             continue
         } else if msg.IsCommand() {
-            command := cmd.ParseMsgCommand(msg)
-            if err := command.GenerateMessage(); err != nil {
-                sendError(msg.Chat.ID, err.Error(), g.api)
-                continue
-            } // TODO: this impl currently doesn't support multi-step commands
+            command := cmd.ParseMsgCommand(g.api, msg)
+            // TODO: this impl currently doesn't support multi-step commands
+            command.GenerateMessage()
             if err := command.SendMessage(g.api); err != nil {
                 sendError(msg.Chat.ID, err.Error(), g.api)
                 continue
@@ -51,11 +49,8 @@ func (g *Gofer) Update(timeout int) {
             if !isCaptionCommand(msg.Caption) {
                 continue
             }
-            command := cmd.ParseImgCommand(msg)
-            if err := command.GenerateMessage(); err != nil {
-                sendError(msg.Chat.ID, err.Error(), g.api)
-                continue
-            }
+            command := cmd.ParseImgCommand(g.api, msg)
+            command.GenerateMessage()
             if err := command.SendMessage(g.api); err != nil {
                 sendError(msg.Chat.ID, err.Error(), g.api)
                 continue
@@ -71,7 +66,7 @@ func isCaptionCommand(caption string) bool {
     if len(tokens) == 0 {
         return false
     }
-    if commandName := tokens[0]; commandName[0] != '/' {
+    if commandName := tokens[0]; commandName[0] == '/' {
         return true 
     }
     return false

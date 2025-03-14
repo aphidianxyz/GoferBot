@@ -10,10 +10,10 @@ import (
 type HelpCommand struct {
     chatID int64
     request string
-    sendConfig telebot.MessageConfig
+    sendConfig telebot.Chattable
 }
 
-func (hc *HelpCommand) GenerateMessage() error {
+func (hc *HelpCommand) GenerateMessage() {
     var config telebot.MessageConfig
     request := strings.TrimPrefix(hc.request, "/")
     switch request {
@@ -31,12 +31,13 @@ func (hc *HelpCommand) GenerateMessage() error {
         config = telebot.NewMessage(hc.chatID, helloSyntax)
     case "help":
         config = telebot.NewMessage(hc.chatID, helpSyntax)
+    case "caption":
+        config = telebot.NewMessage(hc.chatID, captionSyntax + "\n" + captionImgSyntax)
     default:
         invalidCommandMsg := hc.request + " is not a known command"
         config = telebot.NewMessage(hc.chatID, invalidCommandMsg)
     }
     hc.sendConfig = config
-    return nil
 }
 
 func (hc *HelpCommand) SendMessage(api *telebot.BotAPI) error {

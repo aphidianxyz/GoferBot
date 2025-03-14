@@ -13,10 +13,9 @@ type InvalidCommand struct {
 }
 
 // TODO: maybe this would be better described as "UnknownCommand"
-func (ic *InvalidCommand) GenerateMessage() error {
+func (ic *InvalidCommand) GenerateMessage() {
     invalidRequest := ic.request + " is not a valid command!"
     ic.sendConfig = telebot.NewMessage(ic.chatID, invalidRequest)
-    return nil
 }
 
 func (ic *InvalidCommand) SendMessage(api *telebot.BotAPI) error {

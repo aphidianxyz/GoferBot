@@ -9,14 +9,13 @@ import (
 type HelloCommand struct {
     chatID int64
     firstName, lastName, userName string
-    sendConfig telebot.MessageConfig
+    sendConfig telebot.Chattable
 }
 
-func (hc *HelloCommand) GenerateMessage() error {
+func (hc *HelloCommand) GenerateMessage() {
     helloString := "Hello, " + hc.firstName + " " + hc.lastName + "!\nAKA: " + hc.userName 
     config := telebot.NewMessage(hc.chatID, helloString)
     hc.sendConfig = config 
-    return nil
 } 
 
 func (hc *HelloCommand) SendMessage(api *telebot.BotAPI) error {
