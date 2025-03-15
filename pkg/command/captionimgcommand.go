@@ -15,7 +15,6 @@ import (
 )
 
 type CaptionImgCommand struct {
-    chatID int64
     msg telebot.Message
     api *telebot.BotAPI
     imgFilePath string
