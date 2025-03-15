@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 
 	telebot "github.com/OvyFlash/telegram-bot-api"
 	im "gopkg.in/gographics/imagick.v3/imagick"
@@ -88,13 +88,14 @@ func CaptionImage(filepath, topCap, botCap string) error {
     }
 
     // draw captions and overlay them on bg img
-    topCaptionWand, err := DrawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/3, topCap, true)
+    // TODO: maybe handle different size configs
+    topCaptionWand, err := DrawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/4, topCap, true)
     defer topCaptionWand.Destroy()
     if err != nil {
         return errors.New("Failed to draw top caption: " + err.Error())
     }
     mWand.CompositeImageGravity(topCaptionWand, im.COMPOSITE_OP_OVER, im.GRAVITY_NORTH)
-    botCaptionWand, err := DrawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/3, botCap, false)
+    botCaptionWand, err := DrawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/4, botCap, false)
     defer botCaptionWand.Destroy()
     if err != nil {
         return errors.New("Failed to draw bot caption: " + err.Error())
@@ -114,7 +115,7 @@ func DrawCaption(width, height uint, text string, top bool) (*im.MagickWand, err
     wand.SetSize(width, height)
     wand.SetFont("Impact")
     wand.SetOption("stroke", "black")
-    wand.SetOption("strokewidth", "1")
+    wand.SetOption("strokewidth", "2")
     wand.SetOption("fill", "white")
     wand.SetOption("background", "none")
     var gravity im.GravityType = im.GRAVITY_NORTH
@@ -131,16 +132,25 @@ func DrawCaption(width, height uint, text string, top bool) (*im.MagickWand, err
 }
 
 func DownloadImage(url string) (filepath string, error error) {
-    response, err := http.Get(url)
+    // get image
+    // setting headers and faking user-agent to possibly avoid a 403
+    request, err := http.NewRequest("GET", url, nil)
+    request.Header.Set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+    request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+    client := &http.Client{}
+    response, err := client.Do(request)
     if err != nil {
         return "", err
     }
     defer response.Body.Close()
 
-    log.Println(response)
+    if response.StatusCode != http.StatusOK {
+        return "", errors.New("Failed to download image, got HTTP response: " + strconv.Itoa(response.StatusCode))
+    }
 
     filepath = genUniqueFileName()
 
+    // write to disk
     file, err := os.Create(filepath)
     if err != nil {
         return "", err
@@ -167,7 +177,7 @@ func parseCaptions(prompt string) (topCaption, botCaption string, error error) {
 func genUniqueFileName() string {
     hash := fnv.New32a()
     tempFilenameSuffix := hash.Sum32()
-    filename := "temp_caption_" + fmt.Sprint(tempFilenameSuffix) + ".jpg"
+    filename := "temp_caption_" + fmt.Sprint(tempFilenameSuffix) + ".png"
     return filename
 }
 
