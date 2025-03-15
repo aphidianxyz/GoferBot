@@ -55,7 +55,7 @@ func (g *Gofer) Update(timeout int) {
                 sendError(msg.Chat.ID, err.Error(), g.api)
                 continue
             }
-        } else {
+        } else { // TODO: handle messages/command requests with a video or gif attached
             // TODO: handle registered responses
         }
     }

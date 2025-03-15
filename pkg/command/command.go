@@ -39,6 +39,8 @@ func ParseMsgCommand(api *telebot.BotAPI, msg *telebot.Message) Command {
         return &HelpCommand{chatID: msg.From.ID, request: helpRequest}
     case "/caption":
         return &CaptionCommand{msg: *msg}
+    case "/everyone":
+        return &EveryoneCommand{chatID: msg.Chat.ID}
     default:
         return &InvalidCommand{chatID: msg.Chat.ID, request: commandName}
     }
@@ -62,6 +64,8 @@ func ParseImgCommand(api *telebot.BotAPI, msg *telebot.Message) Command {
         return &HelpCommand{chatID: msg.From.ID, request: helpRequest}
     case "/caption":
         return &CaptionImgCommand{api: api, msg: *msg}
+    case "/everyone":
+        return &EveryoneCommand{chatID: msg.Chat.ID}
     default:
         return &InvalidCommand{chatID: msg.Chat.ID, request: commandName}
     }
