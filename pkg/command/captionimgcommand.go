@@ -24,13 +24,13 @@ type CaptionImgCommand struct {
 
 func (ci *CaptionImgCommand) GenerateMessage() {
     // get image from message 
-    imgFileID := GetLargestPhotoID(ci.msg.Photo)
+    imgFileID := getLargestPhotoID(ci.msg.Photo)
     imgFileURL, err := ci.api.GetFileDirectURL(imgFileID)
     if err != nil {
         ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error()) 
         return
     }
-    ci.imgFilePath, err = DownloadImage(imgFileURL)
+    ci.imgFilePath, err = downloadImage(imgFileURL)
     if err != nil {
         ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error())
         return
@@ -42,7 +42,7 @@ func (ci *CaptionImgCommand) GenerateMessage() {
         return
     }
     // generate image
-    if err := CaptionImage(ci.imgFilePath, topCapStr, botCapStr); err != nil {
+    if err := captionImage(ci.imgFilePath, topCapStr, botCapStr); err != nil {
         ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error())
         return
     }
@@ -64,7 +64,7 @@ func (ci *CaptionImgCommand) SendMessage(api *telebot.BotAPI) error {
     return nil
 }
 
-func GetLargestPhotoID(photoSizes []telebot.PhotoSize) string {
+func getLargestPhotoID(photoSizes []telebot.PhotoSize) string {
     largest := photoSizes[0]
     for i, photoSize := range photoSizes {
         if i == 0 {
@@ -77,7 +77,7 @@ func GetLargestPhotoID(photoSizes []telebot.PhotoSize) string {
     return largest.FileID
 }
 
-func CaptionImage(filepath, topCap, botCap string) error {
+func captionImage(filepath, topCap, botCap string) error {
     im.Initialize()
     defer im.Terminate()
     mWand := im.NewMagickWand()
@@ -89,13 +89,13 @@ func CaptionImage(filepath, topCap, botCap string) error {
 
     // draw captions and overlay them on bg img
     // TODO: maybe handle different size configs
-    topCaptionWand, err := DrawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/4, topCap, true)
+    topCaptionWand, err := drawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/4, topCap, true)
     defer topCaptionWand.Destroy()
     if err != nil {
         return errors.New("Failed to draw top caption: " + err.Error())
     }
     mWand.CompositeImageGravity(topCaptionWand, im.COMPOSITE_OP_OVER, im.GRAVITY_NORTH)
-    botCaptionWand, err := DrawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/4, botCap, false)
+    botCaptionWand, err := drawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/4, botCap, false)
     defer botCaptionWand.Destroy()
     if err != nil {
         return errors.New("Failed to draw bot caption: " + err.Error())
@@ -110,7 +110,7 @@ func CaptionImage(filepath, topCap, botCap string) error {
     return nil
 }
 
-func DrawCaption(width, height uint, text string, top bool) (*im.MagickWand, error) {
+func drawCaption(width, height uint, text string, top bool) (*im.MagickWand, error) {
     wand := im.NewMagickWand()
     wand.SetSize(width, height)
     wand.SetFont("Impact")
@@ -131,9 +131,9 @@ func DrawCaption(width, height uint, text string, top bool) (*im.MagickWand, err
     return wand, nil
 }
 
-func DownloadImage(url string) (filepath string, error error) {
+func downloadImage(url string) (filepath string, error error) {
     // get image
-    // setting headers and faking user-agent to possibly avoid a 403
+    // setting headers and spoofing user-agent to avoid a 403
     request, err := http.NewRequest("GET", url, nil)
     request.Header.Set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
     request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
@@ -177,6 +177,8 @@ func parseCaptions(prompt string) (topCaption, botCaption string, error error) {
 func genUniqueFileName() string {
     hash := fnv.New32a()
     tempFilenameSuffix := hash.Sum32()
+    // TODO: perhaps saving as the original format is better
+    // pngs preserve transparency
     filename := "temp_caption_" + fmt.Sprint(tempFilenameSuffix) + ".png"
     return filename
 }

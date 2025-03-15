@@ -22,7 +22,7 @@ func (ci *CaptionCommand) GenerateMessage() {
         ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error())
         return
     }
-    ci.imgFilePath, err = DownloadImage(url)
+    ci.imgFilePath, err = downloadImage(url)
     if err != nil {
         ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error())
         return
@@ -34,7 +34,7 @@ func (ci *CaptionCommand) GenerateMessage() {
         return
     }
     // generate image
-    if err := CaptionImage(ci.imgFilePath, topCapStr, botCapStr); err != nil {
+    if err := captionImage(ci.imgFilePath, topCapStr, botCapStr); err != nil {
         ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error())
         return
     }
