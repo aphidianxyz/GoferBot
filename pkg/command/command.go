@@ -1,7 +1,7 @@
 package command
 
 import (
-	"strings"
+    "strings"
 
     telebot "github.com/OvyFlash/telegram-bot-api"
 )
@@ -37,6 +37,8 @@ func ParseMsgCommand(api *telebot.BotAPI, msg *telebot.Message) Command {
             helpRequest = commandParams[0]
         }
         return &HelpCommand{chatID: msg.From.ID, request: helpRequest}
+    case "/caption":
+        return &CaptionCommand{chatID: msg.Chat.ID, msg: *msg}
     default:
         return &InvalidCommand{chatID: msg.Chat.ID, request: commandName}
     }

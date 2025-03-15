@@ -2,8 +2,8 @@ package command
 
 import (
     "errors"
-
-	telebot "github.com/OvyFlash/telegram-bot-api"
+    
+    telebot "github.com/OvyFlash/telegram-bot-api"
 )
 
 type HelloCommand struct {

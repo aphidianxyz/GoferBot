@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
 
-    im "gopkg.in/gographics/imagick.v3/imagick"
 	telebot "github.com/OvyFlash/telegram-bot-api"
+	im "gopkg.in/gographics/imagick.v3/imagick"
 )
 
 type CaptionImgCommand struct {
@@ -23,13 +24,13 @@ type CaptionImgCommand struct {
 
 func (ci *CaptionImgCommand) GenerateMessage() {
     // get image from message 
-    imgFileID := getLargestPhotoID(ci.msg.Photo)
+    imgFileID := GetLargestPhotoID(ci.msg.Photo)
     imgFileURL, err := ci.api.GetFileDirectURL(imgFileID)
     if err != nil {
         ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error()) 
         return
     }
-    ci.imgFilePath, err = downloadImage(imgFileURL)
+    ci.imgFilePath, err = DownloadImage(imgFileURL)
     if err != nil {
         ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error())
         return
@@ -41,7 +42,7 @@ func (ci *CaptionImgCommand) GenerateMessage() {
         return
     }
     // generate image
-    if err := captionImage(ci.imgFilePath, topCapStr, botCapStr); err != nil {
+    if err := CaptionImage(ci.imgFilePath, topCapStr, botCapStr); err != nil {
         ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error())
         return
     }
@@ -63,7 +64,7 @@ func (ci *CaptionImgCommand) SendMessage(api *telebot.BotAPI) error {
     return nil
 }
 
-func getLargestPhotoID(photoSizes []telebot.PhotoSize) string {
+func GetLargestPhotoID(photoSizes []telebot.PhotoSize) string {
     largest := photoSizes[0]
     for i, photoSize := range photoSizes {
         if i == 0 {
@@ -76,8 +77,7 @@ func getLargestPhotoID(photoSizes []telebot.PhotoSize) string {
     return largest.FileID
 }
 
-// TODO: maybe allow these to be public fns, since CaptionCommand will need them
-func captionImage(filepath, topCap, botCap string) error {
+func CaptionImage(filepath, topCap, botCap string) error {
     im.Initialize()
     defer im.Terminate()
     mWand := im.NewMagickWand()
@@ -88,13 +88,13 @@ func captionImage(filepath, topCap, botCap string) error {
     }
 
     // draw captions and overlay them on bg img
-    topCaptionWand, err := drawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/3, topCap, true)
+    topCaptionWand, err := DrawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/3, topCap, true)
     defer topCaptionWand.Destroy()
     if err != nil {
         return errors.New("Failed to draw top caption: " + err.Error())
     }
     mWand.CompositeImageGravity(topCaptionWand, im.COMPOSITE_OP_OVER, im.GRAVITY_NORTH)
-    botCaptionWand, err := drawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/3, botCap, false)
+    botCaptionWand, err := DrawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/3, botCap, false)
     defer botCaptionWand.Destroy()
     if err != nil {
         return errors.New("Failed to draw bot caption: " + err.Error())
@@ -109,7 +109,7 @@ func captionImage(filepath, topCap, botCap string) error {
     return nil
 }
 
-func drawCaption(width, height uint, text string, top bool) (*im.MagickWand, error) {
+func DrawCaption(width, height uint, text string, top bool) (*im.MagickWand, error) {
     wand := im.NewMagickWand()
     wand.SetSize(width, height)
     wand.SetFont("Impact")
@@ -130,12 +130,14 @@ func drawCaption(width, height uint, text string, top bool) (*im.MagickWand, err
     return wand, nil
 }
 
-func downloadImage(url string) (filepath string, error error) {
+func DownloadImage(url string) (filepath string, error error) {
     response, err := http.Get(url)
     if err != nil {
         return "", err
     }
     defer response.Body.Close()
+
+    log.Println(response)
 
     filepath = genUniqueFileName()
 
@@ -153,6 +155,15 @@ func downloadImage(url string) (filepath string, error error) {
     return filepath, nil
 }
 
+func parseCaptions(prompt string) (topCaption, botCaption string, error error) {
+    regex := regexp.MustCompile(`"([^"]*[a-zA-Z\s\\"]*)"\s+"([^"]*[a-zA-Z\s\\"]*)"$`)
+    captions := regex.FindStringSubmatch(prompt)
+    if len(captions) != 3 { // the first element is the match w/o groups
+        return "", "", errors.New("Expected 2 captions, each encapsulated in quotations")
+    }
+    return captions[1], captions[2], nil
+}
+
 func genUniqueFileName() string {
     hash := fnv.New32a()
     tempFilenameSuffix := hash.Sum32()
@@ -160,11 +171,3 @@ func genUniqueFileName() string {
     return filename
 }
 
-func parseCaptions(prompt string) (topCaption, botCaption string, error error) {
-    regex := regexp.MustCompile(`^/caption\s+"([^"]*[a-zA-Z\s\\"]*)"\s+"([^"]*[a-zA-Z\s\\"]*)"$`)
-    captions := regex.FindStringSubmatch(prompt)
-    if len(captions) != 3 {
-        return "", "", errors.New("Expected 2 captions, each encapsulated in quotations")
-    }
-    return captions[1], captions[2], nil
-}
