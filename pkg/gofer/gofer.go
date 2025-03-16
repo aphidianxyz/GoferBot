@@ -4,13 +4,17 @@ import (
 	"log"
 	"os"
 	"strings"
+    "database/sql"
 
+    //sqlite "github.com/mattn/go-sqlite3"
 	telebot "github.com/OvyFlash/telegram-bot-api"
 	cmd "github.com/aphidianxyz/GoferBot/pkg/command"
 )
 
+
 type Gofer struct {
     api *telebot.BotAPI
+    db *sql.DB
 }
 
 func (g *Gofer) Initialize() {
@@ -34,31 +38,49 @@ func (g *Gofer) Update(timeout int) {
         edit := update.EditedMessage // edit is nil when msg isn't and vice-versa
         if msg == nil {
             if edit != nil {
-                handleEdits(&update)
+                g.handleEdits(&update)
             }
             continue
-        } else if msg.IsCommand() {
-            command := cmd.ParseMsgCommand(g.api, msg)
-            // TODO: this impl currently doesn't support multi-step commands
-            command.GenerateMessage()
-            if err := command.SendMessage(g.api); err != nil {
-                sendError(msg.Chat.ID, err.Error(), g.api)
-                continue
-            }
+        }
+        if msg.IsCommand() {
+            g.handleCommands(&update)
         } else if msg.Photo != nil { // msg w/ photos have captions, manual parsing required
-            if !isCaptionCommand(msg.Caption) {
-                continue
-            }
-            command := cmd.ParseImgCommand(g.api, msg)
-            command.GenerateMessage()
-            if err := command.SendMessage(g.api); err != nil {
-                sendError(msg.Chat.ID, err.Error(), g.api)
-                continue
-            }
+            g.handlePhotoCommands(&update)
         } else { // TODO: handle messages/command requests with a video or gif attached
             // TODO: handle registered responses
         }
     }
+}
+
+func (g *Gofer) handleCommands(update *telebot.Update) {
+    msg := update.Message
+    command := cmd.ParseMsgCommand(g.api, msg)
+    // TODO: this impl currently doesn't support multi-step commands
+    command.GenerateMessage()
+    if err := command.SendMessage(g.api); err != nil {
+        sendError(msg.Chat.ID, err.Error(), g.api)
+        return
+    }
+}
+
+func (g *Gofer) handlePhotoCommands(update *telebot.Update) {
+    msg := update.Message
+    if !isCaptionCommand(msg.Caption) {
+        return
+    }
+    command := cmd.ParseImgCommand(g.api, msg)
+    command.GenerateMessage()
+    if err := command.SendMessage(g.api); err != nil {
+        sendError(msg.Chat.ID, err.Error(), g.api)
+        return
+    }
+}
+
+func (g *Gofer) handleEdits(update *telebot.Update) {
+    if update.EditedMessage == nil {
+        return
+    }
+    // TODO: add operations if we want to handle certain edit events
 }
 
 func isCaptionCommand(caption string) bool {
@@ -72,12 +94,6 @@ func isCaptionCommand(caption string) bool {
     return false
 }
 
-func handleEdits(update *telebot.Update) {
-    if update.EditedMessage == nil {
-        return
-    }
-    // TODO: add operations if we want to handle certain edit events
-}
 
 func sendError(chatID int64, errStr string, api *telebot.BotAPI) {
     errSuffix := "Error: "

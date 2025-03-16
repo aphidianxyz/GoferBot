@@ -6,9 +6,11 @@ import (
 
 type EveryoneCommand struct {
     chatID int64
+    allUsers map[int]string
 }
 
 func (ec *EveryoneCommand) GenerateMessage() {
+    
 }
 
 func (ec *EveryoneCommand) SendMessage(api *telebot.BotAPI) error {
