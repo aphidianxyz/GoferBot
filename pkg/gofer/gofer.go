@@ -14,13 +14,15 @@ import (
 )
 
 type Gofer struct {
+    DatabasePath string
+    ApiToken string
     api *telebot.BotAPI
     db *sql.DB
 }
 
-func (g *Gofer) Initialize(databasePath, apiToken string) {
-    g.initAPI(apiToken)
-    g.initDB(databasePath)
+func (g *Gofer) Initialize() {
+    g.initAPI(g.ApiToken)
+    g.initDB(g.DatabasePath)
 }
 
 func (g *Gofer) Update(timeout int) {
@@ -48,13 +50,17 @@ func (g *Gofer) Update(timeout int) {
     }
 }
 
-func (g *Gofer) initDB(filename string) {
+func (g *Gofer) initDB(databasePath string) {
     // create database directory
+    var perms fs.FileMode = os.ModeDir|0755
     var err error
-    if _, err := os.Stat(filename); errors.Is(err, fs.ErrNotExist) {
-        os.Mkdir("sql", 0755)
+    if _, err := os.Stat(databasePath); errors.Is(err, fs.ErrNotExist) {
+        err := os.MkdirAll(databasePath, perms)
+        if err != nil {
+            log.Panicln("Failed to create parent directories for database file")
+        }
     }
-    g.db, err = sql.Open("sqlite3", "./sql/chats.db")
+    g.db, err = sql.Open("sqlite3", databasePath)
     if pingErr := g.db.Ping(); pingErr != nil && err != nil {
         log.Panic(err)
     }

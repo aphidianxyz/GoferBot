@@ -7,8 +7,8 @@ import (
 )
 
 func main() {
-    gofer := g.Gofer{}
-    gofer.Initialize("./sql", os.Getenv("TOKEN"))
+    gofer := g.Gofer{DatabasePath: "./chats.sql", ApiToken: os.Getenv("TOKEN")}
+    gofer.Initialize()
     gofer.Update(60)
 }
 
