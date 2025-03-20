@@ -1,14 +1,16 @@
 package gofer
 
 import (
+	"database/sql"
+	"errors"
+	"io/fs"
 	"log"
 	"os"
 	"strings"
-    "database/sql"
 
-    //sqlite "github.com/mattn/go-sqlite3"
 	telebot "github.com/OvyFlash/telegram-bot-api"
 	cmd "github.com/aphidianxyz/GoferBot/pkg/command"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 
@@ -18,13 +20,8 @@ type Gofer struct {
 }
 
 func (g *Gofer) Initialize() {
-    token := os.Getenv("TOKEN")
-    bot, err := telebot.NewBotAPI(token)
-    if err != nil {
-        log.Panic("Failed to initialize bot: " + err.Error())
-    }
-    g.api = bot
-    log.Println("Bot initialized! Account: " + g.api.Self.UserName)
+    g.initAPI()
+    g.initDB()
 }
 
 func (g *Gofer) Update(timeout int) {
@@ -50,6 +47,28 @@ func (g *Gofer) Update(timeout int) {
             // TODO: handle registered responses
         }
     }
+}
+
+func (g *Gofer) initDB() {
+    // create database directory
+    var err error
+    if _, err := os.Stat("./sql"); errors.Is(err, fs.ErrNotExist) {
+        os.Mkdir("sql", 0755)
+    }
+    g.db, err = sql.Open("sqlite3", "./sql/test.db")
+    if pingErr := g.db.Ping(); pingErr != nil && err != nil {
+        log.Panic(err)
+    }
+}
+
+func (g *Gofer) initAPI() {
+    token := os.Getenv("TOKEN")
+    var err error
+    g.api, err = telebot.NewBotAPI(token)
+    if err != nil {
+        log.Panic("Failed to initialize bot: " + err.Error())
+    }
+    log.Println("Bot initialized! Account: " + g.api.Self.UserName)
 }
 
 func (g *Gofer) handleCommands(update *telebot.Update) {
