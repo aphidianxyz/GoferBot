@@ -13,15 +13,14 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-
 type Gofer struct {
     api *telebot.BotAPI
     db *sql.DB
 }
 
-func (g *Gofer) Initialize() {
-    g.initAPI()
-    g.initDB()
+func (g *Gofer) Initialize(databasePath, apiToken string) {
+    g.initAPI(apiToken)
+    g.initDB(databasePath)
 }
 
 func (g *Gofer) Update(timeout int) {
@@ -49,20 +48,19 @@ func (g *Gofer) Update(timeout int) {
     }
 }
 
-func (g *Gofer) initDB() {
+func (g *Gofer) initDB(filename string) {
     // create database directory
     var err error
-    if _, err := os.Stat("./sql"); errors.Is(err, fs.ErrNotExist) {
+    if _, err := os.Stat(filename); errors.Is(err, fs.ErrNotExist) {
         os.Mkdir("sql", 0755)
     }
-    g.db, err = sql.Open("sqlite3", "./sql/test.db")
+    g.db, err = sql.Open("sqlite3", "./sql/chats.db")
     if pingErr := g.db.Ping(); pingErr != nil && err != nil {
         log.Panic(err)
     }
 }
 
-func (g *Gofer) initAPI() {
-    token := os.Getenv("TOKEN")
+func (g *Gofer) initAPI(token string) {
     var err error
     g.api, err = telebot.NewBotAPI(token)
     if err != nil {
