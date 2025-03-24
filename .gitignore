@@ -1,4 +1,5 @@
 notes*
 chat-configs/
+*.sql
 *.db
 temp.go

@@ -16,6 +16,7 @@ import (
 type Gofer struct {
     DatabasePath string
     ApiToken string
+
     api *telebot.BotAPI
     db *sql.DB
 }
@@ -26,12 +27,20 @@ func (g *Gofer) Initialize() {
 }
 
 func (g *Gofer) Update(timeout int) {
+    defer g.db.Close()
     updateConfig := telebot.NewUpdate(0)
     updateConfig.Timeout = timeout 
 
     updates := g.api.GetUpdatesChan(updateConfig)
 
     for update := range updates {
+        // check db health
+        if errPing := g.db.Ping(); errPing != nil {
+            log.Println("Database closed, attempting to reopen...")
+            if err := g.initDB(g.DatabasePath); err != nil {
+                log.Panicln("Failed to reopen database. " + err.Error())
+            }
+        }
         msg := update.Message
         edit := update.EditedMessage // edit is nil when msg isn't and vice-versa
         if msg == nil {
@@ -40,6 +49,10 @@ func (g *Gofer) Update(timeout int) {
             }
             continue
         }
+        // records user in a chat for usage of fns like /everyone or /mention [ping group]
+        if err := g.recordUser(msg); err != nil {
+            log.Println(err)
+        } 
         if msg.IsCommand() {
             g.handleCommands(&update)
         } else if msg.Photo != nil { // msg w/ photos have captions, manual parsing required
@@ -50,20 +63,45 @@ func (g *Gofer) Update(timeout int) {
     }
 }
 
-func (g *Gofer) initDB(databasePath string) {
+func (g *Gofer) recordUser(msg *telebot.Message) error {
+    // TODO, update existing rows if a user exists
+    chatID := msg.Chat.ID
+    userID := msg.From.ID
+    username := msg.From.UserName
+    firstName := msg.From.FirstName
+    
+    var err error
+    if username == "" {
+        _, err = g.db.Exec("insert into chats(chatID, userID, username, firstName) values(?, ?, NULL, ?)", chatID, userID, firstName)
+    } else {
+        _, err = g.db.Exec("insert into chats(chatID, userID, username, firstName) values(?, ?, ?, ?)", chatID, userID, username, firstName)
+    }
+    if err != nil {
+        return errors.New("failed to insert user into chats table: " + err.Error())
+    }
+    return nil
+}
+
+func (g *Gofer) initDB(databasePath string) error {
     // create database directory
-    var perms fs.FileMode = os.ModeDir|0755
+    var perms fs.FileMode = 0644
     var err error
     if _, err := os.Stat(databasePath); errors.Is(err, fs.ErrNotExist) {
-        err := os.MkdirAll(databasePath, perms)
+        emptyByte := []byte("")
+        err := os.WriteFile(databasePath, emptyByte, perms)
         if err != nil {
-            log.Panicln("Failed to create parent directories for database file")
+            return err
         }
     }
     g.db, err = sql.Open("sqlite3", databasePath)
     if pingErr := g.db.Ping(); pingErr != nil && err != nil {
-        log.Panic(err)
+        return pingErr
     }
+    if err := createChatTables(g.db); err != nil {
+        return err
+    }
+    log.Println("Database initialized.")
+    return nil
 }
 
 func (g *Gofer) initAPI(token string) {
@@ -111,10 +149,8 @@ func isCaptionCommand(caption string) bool {
     if len(tokens) == 0 {
         return false
     }
-    if commandName := tokens[0]; commandName[0] == '/' {
-        return true 
-    }
-    return false
+    commandName := tokens[0]
+    return commandName[0] == '/'
 }
 
 
@@ -122,4 +158,18 @@ func sendError(chatID int64, errStr string, api *telebot.BotAPI) {
     errSuffix := "Error: "
     errorMessage := telebot.NewMessage(chatID, errSuffix + errStr)
     api.Send(errorMessage)
+}
+
+func createChatTables(db *sql.DB) error {
+    tableStmt := `
+    create table chats(id integer not null primary key,
+    chatID integer not null, 
+    userID integer unique not null, 
+    username text, 
+    firstName text not null);
+    `
+    if _, err := db.Exec(tableStmt); err != nil {
+        return err
+    }
+    return nil
 }
