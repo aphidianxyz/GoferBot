@@ -69,31 +69,26 @@ func (g *Gofer) recordUser(msg *telebot.Message) error {
     username := msg.From.UserName
     firstName := msg.From.FirstName
     var stmt string 
-    var err error
+    var args []interface{}
     if userExists(g.db, chatID, userID) {
         if username == "" {
             stmt = "update chats set firstname=?, username=NULL where chatID=?;"
-            if _, err = g.db.Exec(stmt, firstName, chatID); err != nil {
-                return errors.New("failed to update user info into chats table: " + err.Error())
-            }
+            args = []interface{}{firstName, chatID}
         } else {
             stmt = "update chats set firstname=?, username=? where chatID=?;"
-            if _, err = g.db.Exec(stmt, firstName, username, chatID); err != nil {
-                return errors.New("failed to update user info into chats table: " + err.Error())
-            }
+            args = []interface{}{firstName, username, chatID}
         }
     } else {
         if username == "" {
             stmt = "insert into chats(chatID, userID, username, firstName) values(?, ?, NULL, ?)"
-            if _, err = g.db.Exec(stmt, chatID, userID, firstName); err != nil {
-                return errors.New("failed to insert user data into chats table: " + err.Error())
-            }
+            args = []interface{}{chatID, userID, firstName}
         } else {
             stmt = "insert into chats(chatID, userID, username, firstname) values(?, ?, ?, ?)"
-            if _, err = g.db.Exec(stmt, chatID, userID, username, firstName); err != nil {
-                return errors.New("failed to insert user data into chats table: " + err.Error())
-            }
+            args = []interface{}{chatID, userID, username, firstName}
         }
+    }
+    if _, err := g.db.Exec(stmt, args...); err != nil {
+        return err
     }
     return nil
 }
