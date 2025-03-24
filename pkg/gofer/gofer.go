@@ -64,22 +64,56 @@ func (g *Gofer) Update(timeout int) {
 }
 
 func (g *Gofer) recordUser(msg *telebot.Message) error {
-    // TODO, update existing rows if a user exists
     chatID := msg.Chat.ID
     userID := msg.From.ID
     username := msg.From.UserName
     firstName := msg.From.FirstName
-    
+    var stmt string 
     var err error
-    if username == "" {
-        _, err = g.db.Exec("insert into chats(chatID, userID, username, firstName) values(?, ?, NULL, ?)", chatID, userID, firstName)
+    if userExists(g.db, chatID, userID) {
+        if username == "" {
+            stmt = "update chats set firstname=?, username=NULL where chatID=?;"
+            if _, err = g.db.Exec(stmt, firstName, chatID); err != nil {
+                return errors.New("failed to update user info into chats table: " + err.Error())
+            }
+        } else {
+            stmt = "update chats set firstname=?, username=? where chatID=?;"
+            if _, err = g.db.Exec(stmt, firstName, username, chatID); err != nil {
+                return errors.New("failed to update user info into chats table: " + err.Error())
+            }
+        }
     } else {
-        _, err = g.db.Exec("insert into chats(chatID, userID, username, firstName) values(?, ?, ?, ?)", chatID, userID, username, firstName)
-    }
-    if err != nil {
-        return errors.New("failed to insert user into chats table: " + err.Error())
+        if username == "" {
+            stmt = "insert into chats(chatID, userID, username, firstName) values(?, ?, NULL, ?)"
+            if _, err = g.db.Exec(stmt, chatID, userID, firstName); err != nil {
+                return errors.New("failed to insert user data into chats table: " + err.Error())
+            }
+        } else {
+            stmt = "insert into chats(chatID, userID, username, firstname) values(?, ?, ?, ?)"
+            if _, err = g.db.Exec(stmt, chatID, userID, username, firstName); err != nil {
+                return errors.New("failed to insert user data into chats table: " + err.Error())
+            }
+        }
     }
     return nil
+}
+
+func userExists(db *sql.DB, chatID, userID int64) bool {
+    queryStmt := "select exists(select chatID, userID from chats where chatID=? and userID=?) as row_exists;"
+    row, err := db.Query(queryStmt, chatID, userID)
+    if err != nil {
+        return false
+    }
+    defer row.Close()
+    for row.Next() {
+        var bool int
+        err = row.Scan(&bool)
+        if err != nil {
+            return false
+        }
+        return bool == 1
+    }
+    return false
 }
 
 func (g *Gofer) initDB(databasePath string) error {
@@ -162,9 +196,9 @@ func sendError(chatID int64, errStr string, api *telebot.BotAPI) {
 
 func createChatTables(db *sql.DB) error {
     tableStmt := `
-    create table chats(id integer not null primary key,
+    create table chats(id integer primary key,
     chatID integer not null, 
-    userID integer unique not null, 
+    userID integer not null, 
     username text, 
     firstName text not null);
     `
