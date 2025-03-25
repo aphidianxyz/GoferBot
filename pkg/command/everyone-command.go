@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	telebot "github.com/OvyFlash/telegram-bot-api"
 )
