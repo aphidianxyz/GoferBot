@@ -16,7 +16,7 @@ import (
 
 type CaptionImgCommand struct {
     msg telebot.Message
-    api *telebot.BotAPI
+    api *telebot.BotAPI // required to get a file link from an image uploaded on telegram
     imgFilePath string
     sendConfig telebot.Chattable
 }

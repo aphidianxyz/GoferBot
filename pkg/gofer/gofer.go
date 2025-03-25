@@ -72,10 +72,10 @@ func (g *Gofer) recordUser(msg *telebot.Message) error {
     var args []interface{}
     if userExists(g.db, chatID, userID) {
         if username == "" {
-            stmt = "update chats set firstname=?, username=NULL where chatID=?;"
+            stmt = "update chats set firstname=?, username=NULL where userID=?;"
             args = []interface{}{firstName, chatID}
         } else {
-            stmt = "update chats set firstname=?, username=? where chatID=?;"
+            stmt = "update chats set firstname=?, username=? where userID=?;"
             args = []interface{}{firstName, username, chatID}
         }
     } else {
@@ -144,7 +144,7 @@ func (g *Gofer) initAPI(token string) {
 
 func (g *Gofer) handleCommands(update *telebot.Update) {
     msg := update.Message
-    command := cmd.ParseMsgCommand(g.api, msg)
+    command := cmd.ParseMsgCommand(g.api, g.db, msg)
     // TODO: this impl currently doesn't support multi-step commands
     command.GenerateMessage()
     if err := command.SendMessage(g.api); err != nil {
@@ -158,7 +158,7 @@ func (g *Gofer) handlePhotoCommands(update *telebot.Update) {
     if !isCaptionCommand(msg.Caption) {
         return
     }
-    command := cmd.ParseImgCommand(g.api, msg)
+    command := cmd.ParseImgCommand(g.api, g.db, msg)
     command.GenerateMessage()
     if err := command.SendMessage(g.api); err != nil {
         sendError(msg.Chat.ID, err.Error(), g.api)
@@ -175,7 +175,7 @@ func (g *Gofer) handleEdits(update *telebot.Update) {
 
 func isCaptionCommand(caption string) bool {
     tokens := strings.Split(caption, " ")
-    if len(tokens) == 0 {
+    if len(tokens) == 0 || len(tokens[0]) == 0 { // sometimes images with no captions will have an empty string
         return false
     }
     commandName := tokens[0]
