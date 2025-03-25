@@ -2,8 +2,8 @@ package command
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
+	"log"
 
 	telebot "github.com/OvyFlash/telegram-bot-api"
 )
@@ -27,7 +27,7 @@ func (ec *EveryoneCommand) GenerateMessage() {
 
 func (ec *EveryoneCommand) SendMessage(api *telebot.BotAPI) error {
     if _, err := api.Send(ec.sendConfig); err != nil {
-        return errors.New("Failed to send an EveryoneCommand")
+        return err
     }
     return nil
 }
@@ -45,15 +45,16 @@ func (ec *EveryoneCommand) generateMentions() (string, error) {
         var id int64
         var chatID int64
         var userID int64
-        var username string 
+        var username sql.NullString 
         var firstName string
         if err = rows.Scan(&id, &chatID, &userID, &username, &firstName); err != nil {
+            log.Println(err)
             return "", err
         }
         // users can omit having a username, but a first name is required, which is used as fallback
         var name = firstName
-        if username != "" {
-            name = username
+        if username.String != "" {
+            name = username.String
         }
         mention := fmt.Sprintf("[%v](tg://user?id=%v) ", name, userID)
         mentionsMessage += mention

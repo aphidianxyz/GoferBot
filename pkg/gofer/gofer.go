@@ -70,20 +70,20 @@ func (g *Gofer) recordUser(msg *telebot.Message) error {
     firstName := msg.From.FirstName
     var stmt string 
     var args []interface{}
-    if userExists(g.db, chatID, userID) {
+    if userExists(g.db, userID) {
         if username == "" {
-            stmt = "update chats set firstname=?, username=NULL where userID=?;"
-            args = []interface{}{firstName, chatID}
+            stmt = "update chats set firstName=?, username=NULL where userID=?;"
+            args = []interface{}{firstName, userID}
         } else {
-            stmt = "update chats set firstname=?, username=? where userID=?;"
-            args = []interface{}{firstName, username, chatID}
+            stmt = "update chats set firstName=?, username=? where userID=?;"
+            args = []interface{}{firstName, username, userID}
         }
     } else {
         if username == "" {
             stmt = "insert into chats(chatID, userID, username, firstName) values(?, ?, NULL, ?)"
             args = []interface{}{chatID, userID, firstName}
         } else {
-            stmt = "insert into chats(chatID, userID, username, firstname) values(?, ?, ?, ?)"
+            stmt = "insert into chats(chatID, userID, username, firstName) values(?, ?, ?, ?)"
             args = []interface{}{chatID, userID, username, firstName}
         }
     }
@@ -93,22 +93,13 @@ func (g *Gofer) recordUser(msg *telebot.Message) error {
     return nil
 }
 
-func userExists(db *sql.DB, chatID, userID int64) bool {
-    queryStmt := "select exists(select chatID, userID from chats where chatID=? and userID=?) as row_exists;"
-    row, err := db.Query(queryStmt, chatID, userID)
-    if err != nil {
+func userExists(db *sql.DB, userID int64) bool {
+    var count int
+    if err := db.QueryRow("select count(*) from chats where userID=?", userID).Scan(&count); err != nil {
+        log.Println("Error checking user existence: ", err)
         return false
     }
-    defer row.Close()
-    for row.Next() {
-        var bool int
-        err = row.Scan(&bool)
-        if err != nil {
-            return false
-        }
-        return bool == 1
-    }
-    return false
+    return count > 0
 }
 
 func (g *Gofer) initDB(databasePath string) error {
