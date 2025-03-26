@@ -2,7 +2,7 @@ FROM golang:alpine
 
 WORKDIR /usr/local/goferbot
 
-RUN apk add --no-cache build-base pkgconfig imagemagick-dev
+RUN apk add --no-cache build-base pkgconfig imagemagick-dev imagemagick-jpeg imagemagick-raw imagemagick-tiff imagemagick-tiff imagemagick-webp imagemagick-pdf imagemagick-heic
 
 COPY go.mod go.sum ./
 RUN go mod download 

@@ -1,6 +1,7 @@
 .git
 .gitignore
 notes*
+/sql/*
 *.sql
 *.db
 README.md

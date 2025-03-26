@@ -88,13 +88,13 @@ func captionImage(filepath, topCap, botCap string) error {
 
     // draw captions and overlay them on bg img
     // TODO: maybe handle different size configs
-    topCaptionWand, err := drawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/4, topCap, true)
+    topCaptionWand, err := drawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/2, topCap, true)
     defer topCaptionWand.Destroy()
     if err != nil {
         return errors.New("Failed to draw top caption: " + err.Error())
     }
     mWand.CompositeImageGravity(topCaptionWand, im.COMPOSITE_OP_OVER, im.GRAVITY_NORTH)
-    botCaptionWand, err := drawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/4, botCap, false)
+    botCaptionWand, err := drawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/2, botCap, false)
     defer botCaptionWand.Destroy()
     if err != nil {
         return errors.New("Failed to draw bot caption: " + err.Error())
@@ -112,7 +112,7 @@ func captionImage(filepath, topCap, botCap string) error {
 func drawCaption(width, height uint, text string, top bool) (*im.MagickWand, error) {
     wand := im.NewMagickWand()
     wand.SetSize(width, height)
-    wand.SetFont("Impact")
+    wand.SetFont("./assets/anton/Anton-Regular.ttf")
     wand.SetOption("stroke", "black")
     wand.SetOption("strokewidth", "2")
     wand.SetOption("fill", "white")
