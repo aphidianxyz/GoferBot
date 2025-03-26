@@ -8,6 +8,7 @@ COPY go.mod go.sum ./
 RUN go mod download 
 
 COPY . .
+RUN touch /usr/local/goferbot/sql/chats.db
 
 RUN go build -o gofer .
 

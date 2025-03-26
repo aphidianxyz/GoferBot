@@ -70,7 +70,7 @@ func (g *Gofer) recordUser(msg *telebot.Message) error {
     firstName := msg.From.FirstName
     var stmt string 
     var args []interface{}
-    if userExists(g.db, userID) {
+    if userExists(g.db, chatID, userID) {
         if username == "" {
             stmt = "update chats set firstName=?, username=NULL where userID=?;"
             args = []interface{}{firstName, userID}
@@ -93,9 +93,9 @@ func (g *Gofer) recordUser(msg *telebot.Message) error {
     return nil
 }
 
-func userExists(db *sql.DB, userID int64) bool {
+func userExists(db *sql.DB, chatID, userID int64) bool {
     var count int
-    if err := db.QueryRow("select count(*) from chats where userID=?", userID).Scan(&count); err != nil {
+    if err := db.QueryRow("select count(*) from chats where chatID=? and userID=?", chatID, userID).Scan(&count); err != nil {
         log.Println("Error checking user existence: ", err)
         return false
     }
