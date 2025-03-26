@@ -1,4 +1,4 @@
-FROM go 1.24.0
+FROM go:1.24.0
 
 WORKDIR /usr/local/goferbot
 
