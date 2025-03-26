@@ -16,7 +16,7 @@ const (
     everyoneSyntax string = "/everyone [message?]\nmessage (optional) - a message that accompanies a ping to everyone"
 )
 
-var allHelpSyntaxes = []string{helloSyntax, helpSyntax, captionSyntax, captionImgSyntax}
+var allHelpSyntaxes = []string{helloSyntax, helpSyntax, captionSyntax, captionImgSyntax, everyoneSyntax}
 
 type Command interface {
     GenerateMessage()

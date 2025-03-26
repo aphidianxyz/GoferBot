@@ -33,6 +33,8 @@ func (hc *HelpCommand) GenerateMessage() {
         config = telebot.NewMessage(hc.chatID, helpSyntax)
     case "caption":
         config = telebot.NewMessage(hc.chatID, captionSyntax + "\n" + captionImgSyntax)
+    case "everyone":
+        config = telebot.NewMessage(hc.chatID, everyoneSyntax)
     default:
         invalidCommandMsg := hc.request + " is not a known command"
         config = telebot.NewMessage(hc.chatID, invalidCommandMsg)
