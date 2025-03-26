@@ -1,9 +1,13 @@
-FROM go:1.24.0
+FROM golang:alpine
 
 WORKDIR /usr/local/goferbot
 
-COPY . . 
+RUN apk add --no-cache build-base pkgconfig imagemagick-dev
+
+COPY go.mod go.sum ./
 RUN go mod download 
+
+COPY . .
 
 RUN go build -o gofer .
 
