@@ -50,7 +50,7 @@ func (ci *CaptionCommand) SendMessage(api *telebot.BotAPI) error {
         if ci.imgFilePath != "" {
             os.Remove(ci.imgFilePath)
         }
-        return errors.New("Failed to send a CaptionImgCommand")
+        return err
     }
     os.Remove(ci.imgFilePath)
     return nil
@@ -64,7 +64,7 @@ func getUrl(prompt string) (string, error) {
         return "", errors.New("No URL provided")
     }
     if _, err := url.ParseRequestURI(tokens[1]); err != nil {
-        return "", errors.New("Invalid or malformed URL was inputted")
+        return "./tmp/", errors.New("Invalid or malformed URL was inputted")
     }
     return tokens[1], nil
 }

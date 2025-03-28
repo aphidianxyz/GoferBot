@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"time"
 
 	telebot "github.com/OvyFlash/telegram-bot-api"
 	im "gopkg.in/gographics/imagick.v3/imagick"
@@ -57,7 +58,7 @@ func (ci *CaptionImgCommand) SendMessage(api *telebot.BotAPI) error {
         if ci.imgFilePath != "" {
             os.Remove(ci.imgFilePath)
         }
-        return errors.New("Failed to send a CaptionImgCommand")
+        return err
     }
     os.Remove(ci.imgFilePath)
     return nil
@@ -88,13 +89,13 @@ func captionImage(filepath, topCap, botCap string) error {
 
     // draw captions and overlay them on bg img
     // TODO: maybe handle different size configs
-    topCaptionWand, err := drawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/2, topCap, true)
+    topCaptionWand, err := drawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/4, topCap, true)
     defer topCaptionWand.Destroy()
     if err != nil {
         return errors.New("Failed to draw top caption: " + err.Error())
     }
     mWand.CompositeImageGravity(topCaptionWand, im.COMPOSITE_OP_OVER, im.GRAVITY_NORTH)
-    botCaptionWand, err := drawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/2, botCap, false)
+    botCaptionWand, err := drawCaption(mWand.GetImageWidth(), mWand.GetImageHeight()/4, botCap, false)
     defer botCaptionWand.Destroy()
     if err != nil {
         return errors.New("Failed to draw bot caption: " + err.Error())
@@ -175,10 +176,8 @@ func parseCaptions(prompt string) (topCaption, botCaption string, error error) {
 
 func genUniqueFileName() string {
     hash := fnv.New32a()
-    tempFilenameSuffix := hash.Sum32()
-    // TODO: perhaps saving as the original format is better
-    // pngs preserve transparency
-    filename := "temp_caption_" + fmt.Sprint(tempFilenameSuffix) + ".png"
+    hash.Write([]byte(time.Now().Truncate(time.Nanosecond).String())) // Simplified time handling
+    filename := fmt.Sprintf("./tmp/%x.png", hash.Sum32()) // Direct hex format, handles error internally
     return filename
 }
 
