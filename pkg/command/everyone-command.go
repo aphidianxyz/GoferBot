@@ -3,13 +3,12 @@ package command
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	telebot "github.com/OvyFlash/telegram-bot-api"
 )
 
 type EveryoneCommand struct {
-    chatID int64
+    msg telebot.Message
     db *sql.DB
     sendConfig telebot.Chattable
 }
@@ -17,11 +16,15 @@ type EveryoneCommand struct {
 func (ec *EveryoneCommand) GenerateMessage() {
     mentions, err := ec.generateMentions()
     if err != nil {
-        ec.sendConfig = telebot.NewMessage(ec.chatID, "Failed to retrieve users from this chat")
+        ec.sendConfig = telebot.NewMessage(ec.msg.Chat.ID, "Failed to retrieve users from this chat")
     }
 
-    msgConfig := telebot.NewMessage(ec.chatID, mentions)
+    msgConfig := telebot.NewMessage(ec.msg.Chat.ID, mentions)
     msgConfig.ParseMode = "MarkDown"
+    // link /everyone to the reply of the invoked command
+    if replyTarget := ec.msg.ReplyToMessage; replyTarget != nil {
+        msgConfig.ReplyParameters.MessageID = replyTarget.MessageID
+    }
     ec.sendConfig = msgConfig
 }
 
@@ -35,7 +38,7 @@ func (ec *EveryoneCommand) SendMessage(api *telebot.BotAPI) error {
 func (ec *EveryoneCommand) generateMentions() (string, error) {
     var mentionsMessage string
     queryStmt := "select * from chats where chatID=?"
-    rows, err := ec.db.Query(queryStmt, ec.chatID)
+    rows, err := ec.db.Query(queryStmt, ec.msg.Chat.ID)
     if err != nil {
         return "", err 
     }
@@ -48,7 +51,6 @@ func (ec *EveryoneCommand) generateMentions() (string, error) {
         var username sql.NullString 
         var firstName string
         if err = rows.Scan(&id, &chatID, &userID, &username, &firstName); err != nil {
-            log.Println(err)
             return "", err
         }
         // users can omit having a username, but a first name is required, which is used as fallback

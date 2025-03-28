@@ -24,7 +24,7 @@ type Command interface {
 }
 
 func ParseMsgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) Command {
-    msgTxt := msg.Text
+    msgTxt := strings.Split(msg.Text, "\n")[0] // cmds should only be on the first line
     tokens := strings.Split(msgTxt, " ")
     commandName := tokens[0]
     commandParams := tokens[1:]
@@ -42,7 +42,7 @@ func ParseMsgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
     case "/caption":
         return &CaptionCommand{msg: *msg}
     case "/everyone":
-        return &EveryoneCommand{chatID: msg.Chat.ID, db: chatDB}
+        return &EveryoneCommand{msg: *msg, db: chatDB}
     default:
         return &InvalidCommand{chatID: msg.Chat.ID, request: commandName}
     }
@@ -50,6 +50,7 @@ func ParseMsgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
 
 func ParseImgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) Command {
     msgCap := msg.Caption
+    msgCap = strings.Split(msgCap, "\n")[0] // cmds should only be on the first line
     tokens := strings.Split(msgCap, " ")
     commandName := tokens[0]
     commandParams := tokens[1:]
@@ -67,7 +68,7 @@ func ParseImgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
     case "/caption":
         return &CaptionImgCommand{api: api, msg: *msg}
     case "/everyone":
-        return &EveryoneCommand{chatID: msg.Chat.ID, db: chatDB}
+        return &EveryoneCommand{msg: *msg, db: chatDB}
     default:
         return &InvalidCommand{chatID: msg.Chat.ID, request: commandName}
     }
