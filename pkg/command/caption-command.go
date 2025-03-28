@@ -53,6 +53,7 @@ func (ci *CaptionCommand) SendMessage(api *telebot.BotAPI) error {
         return err
     }
     os.Remove(ci.imgFilePath)
+    deleteOriginalMessage(ci.msg, api)
     return nil
 }
 

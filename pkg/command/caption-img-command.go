@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -61,6 +62,15 @@ func (ci *CaptionImgCommand) SendMessage(api *telebot.BotAPI) error {
         return err
     }
     os.Remove(ci.imgFilePath)
+    // remove the original request if successful, to declutter the chat
+    return deleteOriginalMessage(ci.msg, api)
+}
+
+func deleteOriginalMessage(original telebot.Message, api *telebot.BotAPI) error  {
+    deleteConfig := telebot.NewDeleteMessage(original.Chat.ID, original.MessageID)
+    // HACK: error checking Send with deleteconfigs always returns an error,
+    // even if the delete was successful
+    api.Send(deleteConfig)
     return nil
 }
 
