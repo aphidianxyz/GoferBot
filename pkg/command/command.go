@@ -42,30 +42,7 @@ func ParseMsgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
     case "/caption":
 		url, err := getUrl(msg.Text)
 		if err != nil {
-			// a caption command can work with a reply to an image
-			if exReply := msg.ExternalReply; exReply != nil  { // can't reference a pointer if nil, so double check is necessary
-				if exReply.Photo != nil {
-					replyMsg := *msg
-					replyMsg.Photo = msg.ExternalReply.Photo
-					replyMsg.Caption = msg.Text
-					return &CaptionImgCommand{api: api, msg: replyMsg, originalMsg: msg}
-				} else if exReply.Sticker != nil {
-					// you can't accompany text w/ a sticker, but you can reply to one
-					// which lets you caption a sticker if you reply to it
-					return &CaptionStickerCommand{api: api, sticker: *exReply.Sticker, originalMsg: msg}
-				}
-			}
-			if reply := msg.ReplyToMessage; reply != nil {
-				if  reply.Photo != nil{
-					replyMsg := msg.ReplyToMessage
-					replyMsg.Caption = msg.Text
-					return &CaptionImgCommand{api: api, msg: *replyMsg, originalMsg: msg}
-				} else if reply.Sticker != nil {
-					// you can't accompany text w/ a sticker, but you can reply to one
-					// which lets you caption a sticker if you reply to it
-					return &CaptionStickerCommand{api: api, sticker: *reply.Sticker, originalMsg: msg}
-				}
-			}
+			return buildReplyCaptionCommand(api, msg)
 		}
 		return &CaptionCommand{msg: *msg, url: url}
     case "/everyone":
@@ -99,4 +76,30 @@ func ParseImgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
     default:
         return &InvalidCommand{chatID: msg.Chat.ID, request: commandName}
     }
+}
+
+func buildReplyCaptionCommand(api *telebot.BotAPI, msg *telebot.Message) Command  {
+	// a caption command can work with a reply to an image
+	if exReply := msg.ExternalReply; exReply != nil  { // can't reference a pointer if nil, so double check is necessary
+		if exReply.Photo != nil {
+			replyMsg := *msg
+			replyMsg.Photo = msg.ExternalReply.Photo
+			replyMsg.Caption = msg.Text
+			return &CaptionImgCommand{api: api, msg: replyMsg, originalMsg: msg}
+		} else if exReply.Sticker != nil {
+			// you can't accompany text w/ a sticker, but you can reply to one
+			// which lets you caption a sticker if you reply to it
+			return &CaptionStickerCommand{api: api, sticker: *exReply.Sticker, originalMsg: msg}
+		}
+	} else if reply := msg.ReplyToMessage; reply != nil {
+		if reply.Photo != nil {
+			replyMsg := msg.ReplyToMessage
+			replyMsg.Caption = msg.Text
+			return &CaptionImgCommand{api: api, msg: *replyMsg, originalMsg: msg}
+		} else if reply.Sticker != nil {
+			return &CaptionStickerCommand{api: api, sticker: *reply.Sticker, originalMsg: msg}
+		}
+	}
+	// TODO: make a command response dedicated to failed commands
+	return &InvalidCommand{chatID: msg.Chat.ID, request: "Unable to caption reply"}
 }
