@@ -17,6 +17,8 @@ import (
 
 type CaptionImgCommand struct {
     msg telebot.Message
+	originalMsg *telebot.Message // optional; when we are captioning a replied img, 
+								// we need to store the original msg (the command call) to delete it
     api *telebot.BotAPI // required to get a file link from an image uploaded on telegram
     imgFilePath string
     sendConfig telebot.Chattable
@@ -62,7 +64,10 @@ func (ci *CaptionImgCommand) SendMessage(api *telebot.BotAPI) error {
     }
     os.Remove(ci.imgFilePath)
     // remove the original request if successful, to declutter the chat
-    return deleteOriginalMessage(ci.msg, api)
+	if ci.originalMsg != nil {
+		return deleteOriginalMessage(*ci.originalMsg, api)
+	}
+	return deleteOriginalMessage(ci.msg, api)
 }
 
 func deleteOriginalMessage(original telebot.Message, api *telebot.BotAPI) error {

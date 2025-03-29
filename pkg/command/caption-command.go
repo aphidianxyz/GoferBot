@@ -10,23 +10,19 @@ import (
 )
 
 type CaptionCommand struct {
-    chatID int64
     msg telebot.Message
+	url string
     imgFilePath string
     sendConfig telebot.Chattable
 }
 
 func (ci *CaptionCommand) GenerateMessage() {
-    url, err := getUrl(ci.msg.Text)
+	imgFilePath, err := downloadImage(ci.url)
     if err != nil {
         ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error())
         return
     }
-    ci.imgFilePath, err = downloadImage(url)
-    if err != nil {
-        ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error())
-        return
-    }
+	ci.imgFilePath = imgFilePath
     // get captions
     topCapStr, botCapStr, err := parseCaptions(ci.msg.Text)
     if err != nil {
@@ -53,8 +49,8 @@ func (ci *CaptionCommand) SendMessage(api *telebot.BotAPI) error {
         return err
     }
     os.Remove(ci.imgFilePath)
-    deleteOriginalMessage(ci.msg, api)
-    return nil
+    return deleteOriginalMessage(ci.msg, api)
+
 }
 
 // urls are expected as the first param of /caption

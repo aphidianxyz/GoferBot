@@ -40,7 +40,16 @@ func ParseMsgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
         }
         return &HelpCommand{chatID: msg.Chat.ID, request: helpRequest}
     case "/caption":
-        return &CaptionCommand{msg: *msg}
+		url, err := getUrl(msg.Text)
+		if err != nil {
+			// a caption command can work with a reply to an image
+			if msg.ReplyToMessage.Photo != nil {
+				replyMsg := msg.ReplyToMessage
+				replyMsg.Caption = msg.Text
+				return &CaptionImgCommand{api: api, msg: *replyMsg, originalMsg: msg}
+			}
+		}
+		return &CaptionCommand{msg: *msg, url: url}
     case "/everyone":
         return &EveryoneCommand{msg: *msg, db: chatDB}
     default:
