@@ -2,6 +2,7 @@ package command
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"strings"
@@ -38,6 +39,8 @@ func (ci *CaptionCommand) GenerateMessage() {
     image := telebot.FilePath(ci.imgFilePath)
     image.UploadData()
     photoConfig := telebot.NewPhoto(ci.msg.Chat.ID, image)
+	photoConfig.Caption = "Here's your meme!\n" + fmt.Sprintf("[%v](tg://user?id=%v)", ci.msg.From.FirstName, ci.msg.From.ID)
+	photoConfig.ParseMode = "MarkDown"
     ci.sendConfig = photoConfig
 }
 

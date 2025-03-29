@@ -52,6 +52,14 @@ func (ci *CaptionImgCommand) GenerateMessage() {
     image := telebot.FilePath(ci.imgFilePath)
     image.UploadData()
     photoConfig := telebot.NewPhoto(ci.msg.Chat.ID, image)
+	recipientID := ci.msg.From.ID
+	recipientName := ci.msg.From.FirstName
+	if ci.originalMsg != nil {
+		recipientName = ci.originalMsg.From.FirstName
+		recipientID = ci.originalMsg.From.ID
+	}
+	photoConfig.Caption = "Here's your meme!\n" + fmt.Sprintf("[%v](tg://user?id=%v)", recipientName, recipientID)
+	photoConfig.ParseMode = "MarkDown"
     ci.sendConfig = photoConfig
 }
 
