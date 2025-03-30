@@ -28,6 +28,8 @@ func ParseMsgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
             helpRequest = commandParams[0]
         }
         return &HelpCommand{chatID: msg.Chat.ID, request: helpRequest}
+    case "/ping":
+        return &PingCommand{chatID: msg.Chat.ID}
     case "/caption":
 		url, err := getUrl(msg.Text)
 		if err != nil {
