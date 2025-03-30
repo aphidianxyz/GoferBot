@@ -142,13 +142,13 @@ func drawCaption(width, height uint, text string, top bool) (*im.MagickWand, err
     wand.SetOption("background", "none")
 	wand.SetOption("encoding", "UTF-8")
     var gravity im.GravityType = im.GRAVITY_NORTH
-    if !top{
+    if !top {
         gravity = im.GRAVITY_SOUTH
     }
     wand.SetGravity(gravity)
 
     if err := wand.ReadImage("caption:" + text); err != nil {
-        return nil,  err
+        return nil, err
     }
 
     return wand, nil
