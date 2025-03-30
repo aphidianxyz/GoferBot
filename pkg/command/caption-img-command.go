@@ -189,7 +189,7 @@ func downloadImage(url string) (filepath string, error error) {
 }
 
 func parseCaptions(prompt string) (topCaption, botCaption string, error error) {
-    regex := regexp.MustCompile(`"([^"]*[a-zA-Z\s\\"]*)"\s+"([^"]*[a-zA-Z\s\\"]*)"$`)
+    regex := regexp.MustCompile(`['"“”]([^'"“”]*.*)['"“”]\s+['"“”]([^'"“”]*.*)['"“”]$`)
     captions := regex.FindStringSubmatch(prompt)
     if len(captions) != 3 { // the first element is the match w/o groups
         return "", "", errors.New("Expected 2 captions, each encapsulated in quotations")
