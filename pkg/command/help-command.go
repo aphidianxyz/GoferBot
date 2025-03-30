@@ -14,7 +14,7 @@ type HelpCommand struct {
 }
 
 func (hc *HelpCommand) GenerateMessage() {
-    var config telebot.MessageConfig
+	var syntax string
     request := strings.TrimPrefix(hc.request, "/")
     switch request {
     case "":
@@ -26,20 +26,21 @@ func (hc *HelpCommand) GenerateMessage() {
                 allSyntaxes += syntaxString + "\n"
             }
         }
-        config = telebot.NewMessage(hc.chatID, allSyntaxes)
-    case "hello":
-        config = telebot.NewMessage(hc.chatID, helloSyntax)
-    case "help":
-        config = telebot.NewMessage(hc.chatID, helpSyntax)
+		syntax = allSyntaxes
+	case "about":
+		syntax = aboutSyntax
     case "caption":
-        config = telebot.NewMessage(hc.chatID, captionSyntax + "\n" + captionImgSyntax)
+		syntax = captionSyntax
     case "everyone":
-        config = telebot.NewMessage(hc.chatID, everyoneSyntax)
+		syntax = everyoneSyntax
+    case "hello":
+		syntax = helloSyntax
+    case "help":
+		syntax = helpSyntax
     default:
-        invalidCommandMsg := hc.request + " is not a known command"
-        config = telebot.NewMessage(hc.chatID, invalidCommandMsg)
+        syntax = hc.request + " is not a known command"
     }
-    hc.sendConfig = config
+	hc.sendConfig = telebot.NewMessage(hc.chatID, syntax)
 }
 
 func (hc *HelpCommand) SendMessage(api *telebot.BotAPI) error {

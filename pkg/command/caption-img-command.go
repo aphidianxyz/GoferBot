@@ -142,13 +142,13 @@ func drawCaption(width, height uint, text string, top bool) (*im.MagickWand, err
     wand.SetOption("background", "none")
 	wand.SetOption("encoding", "UTF-8")
     var gravity im.GravityType = im.GRAVITY_NORTH
-    if !top{
+    if !top {
         gravity = im.GRAVITY_SOUTH
     }
     wand.SetGravity(gravity)
 
     if err := wand.ReadImage("caption:" + text); err != nil {
-        return nil,  err
+        return nil, err
     }
 
     return wand, nil
@@ -189,7 +189,7 @@ func downloadImage(url string) (filepath string, error error) {
 }
 
 func parseCaptions(prompt string) (topCaption, botCaption string, error error) {
-    regex := regexp.MustCompile(`"([^"]*[a-zA-Z\s\\"]*)"\s+"([^"]*[a-zA-Z\s\\"]*)"$`)
+    regex := regexp.MustCompile(`['"“”]([^'"“”]*.*)['"“”]\s+['"“”]([^'"“”]*.*)['"“”]$`)
     captions := regex.FindStringSubmatch(prompt)
     if len(captions) != 3 { // the first element is the match w/o groups
         return "", "", errors.New("Expected 2 captions, each encapsulated in quotations")

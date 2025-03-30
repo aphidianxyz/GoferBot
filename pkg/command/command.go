@@ -18,6 +18,16 @@ func ParseMsgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
     commandName := tokens[0]
     commandParams := tokens[1:]
     switch commandName {
+	case "/about":
+		return &AboutCommand{chatID: msg.Chat.ID}
+    case "/caption":
+		url, err := getUrl(msg.Text)
+		if err != nil {
+			return buildReplyCaptionCommand(api, msg)
+		}
+		return &CaptionCommand{msg: *msg, url: url}
+    case "/everyone":
+        return &EveryoneCommand{msg: *msg, db: chatDB}
     case "/hello": 
         return &HelloCommand{chatID: msg.Chat.ID, firstName: msg.From.FirstName, lastName: msg.From.LastName, userName: msg.From.UserName}
     case "/help":
@@ -30,14 +40,6 @@ func ParseMsgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
         return &HelpCommand{chatID: msg.Chat.ID, request: helpRequest}
     case "/ping":
         return &PingCommand{chatID: msg.Chat.ID}
-    case "/caption":
-		url, err := getUrl(msg.Text)
-		if err != nil {
-			return buildReplyCaptionCommand(api, msg)
-		}
-		return &CaptionCommand{msg: *msg, url: url}
-    case "/everyone":
-        return &EveryoneCommand{msg: *msg, db: chatDB}
     default:
         return &InvalidCommand{chatID: msg.Chat.ID, request: commandName}
     }
@@ -50,6 +52,10 @@ func ParseImgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
     commandName := tokens[0]
     commandParams := tokens[1:]
     switch commandName {
+	case "/about":
+		return &AboutCommand{chatID: msg.Chat.ID}
+    case "/caption":
+        return &CaptionImgCommand{api: api, msg: *msg}
     case "/hello":
         return &HelloCommand{chatID: msg.Chat.ID, firstName: msg.From.FirstName, lastName: msg.From.LastName, userName: msg.From.UserName}
     case "/help":
@@ -60,10 +66,10 @@ func ParseImgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
             helpRequest = commandParams[0]
         }
         return &HelpCommand{chatID: msg.Chat.ID, request: helpRequest}
-    case "/caption":
-        return &CaptionImgCommand{api: api, msg: *msg}
     case "/everyone":
         return &EveryoneCommand{msg: *msg, db: chatDB}
+    case "/ping":
+        return &PingCommand{chatID: msg.Chat.ID}
     default:
         return &InvalidCommand{chatID: msg.Chat.ID, request: commandName}
     }
