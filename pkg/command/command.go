@@ -7,17 +7,6 @@ import (
 	telebot "github.com/OvyFlash/telegram-bot-api"
 )
 
-// maybe this should be a data file, i.e. JSON
-const (
-    helloSyntax string = "/hello - Gofer greets you!"
-    helpSyntax string = "/help [command?] - Describes command functionality and syntax\ncommand (optional) - a specific command to describe"
-    captionSyntax string = "/caption [url] [\"top\"] [\"bot\"] - Creates an impact font caption meme\nurl - the url of the image to be captioned\n\"top\" - the top caption, encapsulated by quotes\n\"bot\" - the bottom caption, encapsulated by quotes"
-    captionImgSyntax string = "/caption [\"top\"] [\"bot\"] (with an image attached) - Creates an impact font caption meme\n\"top\" - the top caption, encapsulated by quotes\n\"bot\" - the bottom caption, encapsulated by quotes"
-    everyoneSyntax string = "/everyone [message?]\nmessage (optional) - a message that accompanies a ping to everyone"
-)
-
-var allHelpSyntaxes = []string{helloSyntax, helpSyntax, captionSyntax, captionImgSyntax, everyoneSyntax}
-
 type Command interface {
     GenerateMessage()
     SendMessage(api *telebot.BotAPI) error
@@ -78,7 +67,7 @@ func ParseImgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
     }
 }
 
-func buildReplyCaptionCommand(api *telebot.BotAPI, msg *telebot.Message) Command  {
+func buildReplyCaptionCommand(api *telebot.BotAPI, msg *telebot.Message) Command {
 	// a caption command can work with a reply to an image
 	if exReply := msg.ExternalReply; exReply != nil  { // can't reference a pointer if nil, so double check is necessary
 		if exReply.Photo != nil {

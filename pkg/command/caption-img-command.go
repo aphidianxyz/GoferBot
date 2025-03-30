@@ -135,11 +135,12 @@ func captionImage(filepath, topCap, botCap string) error {
 func drawCaption(width, height uint, text string, top bool) (*im.MagickWand, error) {
     wand := im.NewMagickWand()
     wand.SetSize(width, height)
-    wand.SetFont("./assets/anton/Anton-Regular.ttf")
+    wand.SetFont("./assets/DejaVu_Sans/DejaVuSansCondensed-Bold.ttf")
     wand.SetOption("stroke", "black")
     wand.SetOption("strokewidth", "2")
     wand.SetOption("fill", "white")
     wand.SetOption("background", "none")
+	wand.SetOption("encoding", "UTF-8")
     var gravity im.GravityType = im.GRAVITY_NORTH
     if !top{
         gravity = im.GRAVITY_SOUTH
