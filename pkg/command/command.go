@@ -18,6 +18,8 @@ func ParseMsgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
     commandName := tokens[0]
     commandParams := tokens[1:]
     switch commandName {
+	case "/about":
+		return &AboutCommand{chatID: msg.Chat.ID}
     case "/caption":
 		url, err := getUrl(msg.Text)
 		if err != nil {
@@ -50,6 +52,8 @@ func ParseImgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
     commandName := tokens[0]
     commandParams := tokens[1:]
     switch commandName {
+	case "/about":
+		return &AboutCommand{chatID: msg.Chat.ID}
     case "/caption":
         return &CaptionImgCommand{api: api, msg: *msg}
     case "/hello":
