@@ -15,14 +15,17 @@ import (
 
 type Gofer struct {
     DatabasePath string
-    ApiToken string
+    APIToken string
+    CommandJSONFilePath string
 
+    commandJSON cmd.CommandJSON
     api *telebot.BotAPI
     db *sql.DB
 }
 
 func (g *Gofer) Initialize() {
-    g.initAPI(g.ApiToken)
+    g.initAPI(g.APIToken)
+    g.initCommandDescriptions(g.CommandJSONFilePath)
     g.initDB(g.DatabasePath)
 }
 
@@ -38,7 +41,7 @@ func (g *Gofer) Update(timeout int) {
         if errPing := g.db.Ping(); errPing != nil {
             log.Println("Database closed, attempting to reopen...")
             if err := g.initDB(g.DatabasePath); err != nil {
-                log.Panicln("Failed to reopen database. " + err.Error())
+				log.Panicln("Failed to reopen database: " + err.Error())
             }
         }
         msg := update.Message
@@ -61,6 +64,45 @@ func (g *Gofer) Update(timeout int) {
             // TODO: handle registered responses
         }
     }
+}
+
+func (g *Gofer) initDB(databasePath string) error {
+    // create database directory
+    var perms fs.FileMode = 0644 
+    var err error
+    if _, err := os.Stat(databasePath); errors.Is(err, fs.ErrNotExist) {
+        // touch file
+        emptyByte := []byte("") 
+        err := os.WriteFile(databasePath, emptyByte, perms)
+        if err != nil {
+            return err
+        }
+    }
+    g.db, err = sql.Open("sqlite3", databasePath)
+    if pingErr := g.db.Ping(); pingErr != nil && err != nil {
+        return pingErr
+    }
+    if err := createChatTables(g.db); err != nil {
+        return err
+    }
+    log.Println("Database initialized.")
+    return nil
+}
+
+func (g *Gofer) initAPI(token string) {
+    var err error
+    g.api, err = telebot.NewBotAPI(token)
+    if err != nil {
+        log.Panic("Failed to initialize bot: " + err.Error())
+    }
+    log.Println("Bot initialized! Account: " + g.api.Self.UserName)
+}
+
+func (g *Gofer) initCommandDescriptions(commandJSONFilePath string) {
+	var err error
+	if g.commandJSON, err = cmd.GenerateCommandJSON(commandJSONFilePath); err != nil {
+		log.Panicln("Failed to generate help descriptions: " + err.Error())
+	}
 }
 
 func (g *Gofer) recordUser(msg *telebot.Message) error {
@@ -102,40 +144,9 @@ func userExists(db *sql.DB, chatID, userID int64) bool {
     return count > 0
 }
 
-func (g *Gofer) initDB(databasePath string) error {
-    // create database directory
-    var perms fs.FileMode = 0644
-    var err error
-    if _, err := os.Stat(databasePath); errors.Is(err, fs.ErrNotExist) {
-        emptyByte := []byte("")
-        err := os.WriteFile(databasePath, emptyByte, perms)
-        if err != nil {
-            return err
-        }
-    }
-    g.db, err = sql.Open("sqlite3", databasePath)
-    if pingErr := g.db.Ping(); pingErr != nil && err != nil {
-        return pingErr
-    }
-    if err := createChatTables(g.db); err != nil {
-        return err
-    }
-    log.Println("Database initialized.")
-    return nil
-}
-
-func (g *Gofer) initAPI(token string) {
-    var err error
-    g.api, err = telebot.NewBotAPI(token)
-    if err != nil {
-        log.Panic("Failed to initialize bot: " + err.Error())
-    }
-    log.Println("Bot initialized! Account: " + g.api.Self.UserName)
-}
-
 func (g *Gofer) handleCommands(update *telebot.Update) {
     msg := update.Message
-    command := cmd.ParseMsgCommand(g.api, g.db, msg)
+    command := cmd.ParseMsgCommand(g.api, g.db, g.commandJSON, msg)
     // TODO: this impl currently doesn't support multi-step commands
     command.GenerateMessage()
     if err := command.SendMessage(g.api); err != nil {
@@ -149,7 +160,7 @@ func (g *Gofer) handlePhotoCommands(update *telebot.Update) {
     if !isCaptionCommand(msg.Caption) {
         return
     }
-    command := cmd.ParseImgCommand(g.api, g.db, msg)
+    command := cmd.ParseImgCommand(g.api, g.db, g.commandJSON, msg)
     command.GenerateMessage()
     if err := command.SendMessage(g.api); err != nil {
         sendError(msg.Chat.ID, err.Error(), g.api)
@@ -166,7 +177,8 @@ func (g *Gofer) handleEdits(update *telebot.Update) {
 
 func isCaptionCommand(caption string) bool {
     tokens := strings.Split(caption, " ")
-    if len(tokens) == 0 || len(tokens[0]) == 0 { // sometimes images with no captions will have an empty string
+	// sometimes images with no captions will have one entry: an empty string
+    if len(tokens) == 0 || len(tokens[0]) == 0 { 
         return false
     }
     commandName := tokens[0]

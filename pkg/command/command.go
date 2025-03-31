@@ -12,7 +12,10 @@ type Command interface {
     SendMessage(api *telebot.BotAPI) error
 }
 
-func ParseMsgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) Command {
+// TODO, pass command info to commands that have params for reference if a 
+// user gets it wrong, it'll pass the command description to the user
+func ParseMsgCommand(api *telebot.BotAPI, chatDB *sql.DB,
+	commandJSON CommandJSON, msg *telebot.Message) Command {
     msgTxt := strings.Split(msg.Text, "\n")[0] // cmds should only be on the first line
     tokens := strings.Split(msgTxt, " ")
     commandName := tokens[0]
@@ -37,7 +40,7 @@ func ParseMsgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
         } else {
             helpRequest = commandParams[0]
         }
-        return &HelpCommand{chatID: msg.Chat.ID, request: helpRequest}
+		return &HelpCommand{chatID: msg.Chat.ID, request: helpRequest, commandJSON: commandJSON}
     case "/ping":
         return &PingCommand{chatID: msg.Chat.ID}
     default:
@@ -45,7 +48,8 @@ func ParseMsgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
     }
 } 
 
-func ParseImgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) Command {
+func ParseImgCommand(api *telebot.BotAPI, chatDB *sql.DB,
+	commandJSON CommandJSON, msg *telebot.Message) Command {
     msgCap := msg.Caption
     msgCap = strings.Split(msgCap, "\n")[0] // cmds should only be on the first line
     tokens := strings.Split(msgCap, " ")
@@ -65,7 +69,7 @@ func ParseImgCommand(api *telebot.BotAPI, chatDB *sql.DB, msg *telebot.Message) 
         } else {
             helpRequest = commandParams[0]
         }
-        return &HelpCommand{chatID: msg.Chat.ID, request: helpRequest}
+		return &HelpCommand{chatID: msg.Chat.ID, request: helpRequest, commandJSON: commandJSON}
     case "/everyone":
         return &EveryoneCommand{msg: *msg, db: chatDB}
     case "/ping":
