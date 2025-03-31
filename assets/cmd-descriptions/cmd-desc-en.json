@@ -32,11 +32,11 @@
             "params": [
                 {
                     "paramName": "\"top\"",
-                    "paramDesc": "the top caption, encased by quotes"
+                    "paramDesc": "the top caption, encased in quotes"
                 },
                 {
                     "paramName": "\"bot\"",
-                    "paramDesc": "the bot caption, encased by quotes"
+                    "paramDesc": "the bot caption, encased in quotes"
                 }
             ]
         },
@@ -47,18 +47,18 @@
             "params": [
                 {
                     "paramName": "\"top\"",
-                    "paramDesc": "the top caption, encased by quotes"
+                    "paramDesc": "the top caption, encased in quotes"
                 },
                 {
                     "paramName": "\"bot\"",
-                    "paramDesc": "the bot caption, encased by quotes"
+                    "paramDesc": "the bot caption, encased in quotes"
                 }
             ]
         },
         {   
             "commandName": "everyone",
             "commandSyntax": "/everyone",
-            "commandDesc": "pings everyone (that has participated at least once since the bot was added)",
+            "commandDesc": "pings everyone (that has messaged at least once since the bot was added)",
             "params": []
         },
         {   
