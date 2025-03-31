@@ -1,42 +1,75 @@
 {
-    {"/about": {
-        "description": "describes GoferBot, and links to the project page",
-        "params": {}
-    }},
-    {"/caption": {
-        "description": "creates a caption meme, given a link to an image and captions",
-        "params": {
-            "[url]": "a link that points to an image",
-            "[\"top\"]": "the top caption, encased by quotes",
-            "[\"bot\"]": "the bot caption, encased by quotes"
+    "commands": [
+        {
+            "commandName": "about",
+            "commandDesc": "describes GoferBot, and links to the project page",
+            "params": []
+        },
+        {
+            "commandName": "caption",
+            "commandDesc": "creates a caption meme",
+            "params": [
+                {
+                    "paramName": "URL",
+                    "paramDesc": "a URL pointing to an image"
+                },
+                {
+                    "paramName": "\"top\"",
+                    "paramDesc": "the top caption, encased by quotes"
+                },
+                {
+                    "paramName": "\"bot\"",
+                    "paramDesc": "the bot caption, encased by quotes"
+                }
+            ]
+        },
+        {   
+            "commandName": "caption",
+            "commandDesc": "(while attached with an image) creates a caption meme",
+            "params": [
+                {
+                    "paramName": "\"top\"",
+                    "paramDesc": "the top caption, encased by quotes"
+                },
+                {
+                    "paramName": "\"bot\"",
+                    "paramDesc": "the bot caption, encased by quotes"
+                }
+            ]
+        },
+        {   
+            "commandName": "caption",
+            "commandDesc": "(while replied to a sticker/image) creates a caption meme",
+            "params": [
+                {
+                    "paramName": "\"top\"",
+                    "paramDesc": "the top caption, encased by quotes"
+                },
+                {
+                    "paramName": "\"bot\"",
+                    "paramDesc": "the bot caption, encased by quotes"
+                }
+            ]
+        },
+        {   
+            "commandName": "everyone",
+            "commandDesc": "pings everyone (that has participated at least once since the bot was added)",
+            "params": []
+        },
+        {   
+            "commandName": "hello",
+            "commandDesc": "has Goferbot greet you",
+            "params": []
+        },
+        { 
+            "commandName": "help",
+            "commandDesc": "lists all commands, what they do and their syntax",
+            "params": [
+                {
+                    "paramName": "command",
+                    "paramDesc": "(optional) a specific command to describe"
+                }
+            ]
         }
-    }},
-    {"/caption (with an attached image)": {
-        "description": "creates a caption meme, given an image and captions",
-        "params": {
-            "[\"top\"]": "the top caption, encased by quotes",
-            "[\"bot\"]": "the bot caption, encased by quotes"
-        }
-    }},
-    {"/caption (with a reply to an image or sticker)": {
-        "description": "creates a caption meme, given a replied image/sticker and captions",
-        "params": {
-            "[\"top\"]": "the top caption, encased by quotes",
-            "[\"bot\"]": "the bot caption, encased by quotes"
-        }
-    }},
-    {"/everyone": {
-        "description": "pings everyone (that has participated at least once since the bot was added)",
-        "params": {}
-    }},
-    {"/hello": {
-        "description": "has Goferbot greet you",
-        "params": {}
-    }},
-    {"/help": {
-        "description": "lists all commands, what they do and their syntax",
-        "params": {
-            "[command?]": "(optional) a specific command to describe"
-        }
-    }}
+    ]
 }

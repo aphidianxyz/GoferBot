@@ -1,7 +1,7 @@
 package command
 
 import (
-	"errors"
+	"fmt"
 	"strings"
 
 	telebot "github.com/OvyFlash/telegram-bot-api"
@@ -10,42 +10,36 @@ import (
 type HelpCommand struct {
     chatID int64
     request string
+	commandJSON CommandJSON
     sendConfig telebot.Chattable
 }
 
 func (hc *HelpCommand) GenerateMessage() {
-	var syntax string
-    request := strings.TrimPrefix(hc.request, "/")
-    switch request {
-    case "":
-        var allSyntaxes string
-        for i, syntaxString := range allHelpSyntaxes {
-            if i == len(allHelpSyntaxes) {
-                allSyntaxes += syntaxString 
-            } else {
-                allSyntaxes += syntaxString + "\n"
-            }
-        }
-		syntax = allSyntaxes
-	case "about":
-		syntax = aboutSyntax
-    case "caption":
-		syntax = captionSyntax
-    case "everyone":
-		syntax = everyoneSyntax
-    case "hello":
-		syntax = helloSyntax
-    case "help":
-		syntax = helpSyntax
-    default:
-        syntax = hc.request + " is not a known command"
-    }
-	hc.sendConfig = telebot.NewMessage(hc.chatID, syntax)
+	var cmdInfo string
+	trimmed := strings.TrimLeft(hc.request, "/")
+	if hc.request == ""{
+		cmdInfo = hc.commandJSON.formatAllCommandInfo()
+	} else {
+		cmdInfo = hc.commandJSON.formatCommandInfo(trimmed)
+	}
+	if cmdInfo == "" {
+		ErrCmdDoesntExist := fmt.Sprintf("Error: command: \"%v\" does not exist", hc.request)
+		hc.sendConfig = telebot.NewMessage(hc.chatID, ErrCmdDoesntExist)
+		return
+	}
+	msgConfig := telebot.NewMessage(hc.chatID, cmdInfo) 
+	msgConfig.ParseMode = "MarkDown"
+	hc.sendConfig = msgConfig
 }
 
-func (hc *HelpCommand) SendMessage(api *telebot.BotAPI) error {
+func (hc HelpCommand) SendMessage(api *telebot.BotAPI) error {
     if _, err := api.Send(hc.sendConfig); err != nil {
-        return errors.New("Failed to send a HelpCommand")
+        return err
     }
     return nil
+}
+
+func getCommandInfo(request string, commandJSON CommandJSON) string {
+	commandInfo := commandJSON.formatCommandInfo(request)
+	return commandInfo
 }
