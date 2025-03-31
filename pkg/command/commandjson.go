@@ -13,6 +13,7 @@ type CommandJSON struct {
 
 type CommandInfo struct {
 	CommandName string `json:"commandName"`
+	CommandSyntax string `json:"commandSyntax"`
 	CommandDesc string `json:"commandDesc"`
 	Params []struct {
 		ParamName string `json:"paramName"`
@@ -42,29 +43,30 @@ func (c CommandJSON) findCommand(commandName string) (found []CommandInfo) {
 	return found
 }
 
-func formatCommandHelper(command CommandInfo) string {
-	name := command.CommandName
-	desc := command.CommandDesc
-	params := command.Params
-	var paramString string
-	for _, param := range params {
-		paramString += fmt.Sprintf("+ %v: %v\n", param.ParamName, param.ParamDesc)
-	}
-	return fmt.Sprintf("%v - %v\n%v\n", name, desc, paramString)
-}
-
 func (c CommandJSON) formatCommandInfo(commandName string) (formatted string) {
 	var commands []CommandInfo
 	commands = c.findCommand(commandName)
 	for _, command := range commands {
-		formatted += formatCommandHelper(command)
+		formatted += format(command)
 	}
 	return formatted
 }
 
 func (c CommandJSON) formatAllCommandInfo() (formatted string) {
 	for _, command := range c.Commands {
-		formatted += formatCommandHelper(command)
+		formatted += format(command)
 	}
 	return formatted
+}
+
+func format(command CommandInfo) string {
+	name := command.CommandName
+	syntax := command.CommandSyntax
+	desc := command.CommandDesc
+	params := command.Params
+	var paramString string
+	for _, param := range params {
+		paramString += fmt.Sprintf("+ %v: %v\n", param.ParamName, param.ParamDesc)
+	}
+	return fmt.Sprintf("%v - %v\n%v\n%v\n", name, syntax, desc, paramString)
 }

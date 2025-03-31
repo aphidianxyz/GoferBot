@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	gofer := g.Gofer{DatabasePath: "./sql/chats.db", APIToken: os.Getenv("TOKEN"), CommandJSONFilePath: "./assets/help-descriptions/help-descriptions-en.json"}
+	gofer := g.Gofer{DatabasePath: "./sql/chats.db", APIToken: os.Getenv("TOKEN"), CommandJSONFilePath: "./assets/cmd-descriptions/cmd-desc-en.json"}
     gofer.Initialize()
     gofer.Update(60)
 }

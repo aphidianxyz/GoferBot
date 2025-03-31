@@ -16,16 +16,16 @@ import (
 type Gofer struct {
     DatabasePath string
     APIToken string
-	CommandJSONFilePath string
+    CommandJSONFilePath string
 
-	commandJSON cmd.CommandJSON
+    commandJSON cmd.CommandJSON
     api *telebot.BotAPI
     db *sql.DB
 }
 
 func (g *Gofer) Initialize() {
     g.initAPI(g.APIToken)
-	g.initCommandDescriptions(g.CommandJSONFilePath)
+    g.initCommandDescriptions(g.CommandJSONFilePath)
     g.initDB(g.DatabasePath)
 }
 
@@ -71,7 +71,7 @@ func (g *Gofer) initDB(databasePath string) error {
     var perms fs.FileMode = 0644 
     var err error
     if _, err := os.Stat(databasePath); errors.Is(err, fs.ErrNotExist) {
-		// touch file
+        // touch file
         emptyByte := []byte("") 
         err := os.WriteFile(databasePath, emptyByte, perms)
         if err != nil {
@@ -101,7 +101,7 @@ func (g *Gofer) initAPI(token string) {
 func (g *Gofer) initCommandDescriptions(commandJSONFilePath string) {
 	var err error
 	if g.commandJSON, err = cmd.GenerateCommandJSON(commandJSONFilePath); err != nil {
-		log.Panicln("Failed to generate help descriptions")
+		log.Panicln("Failed to generate help descriptions: " + err.Error())
 	}
 }
 
