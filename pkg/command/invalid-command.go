@@ -12,9 +12,13 @@ type InvalidCommand struct {
     sendConfig telebot.MessageConfig
 }
 
+const (
+	invalidCmdSuffix = " is not a valid command!"
+)
+
 // TODO: maybe this would be better described as "UnknownCommand"
 func (ic *InvalidCommand) GenerateMessage() {
-    invalidRequest := ic.request + " is not a valid command!"
+    invalidRequest := ic.request + invalidCmdSuffix
     ic.sendConfig = telebot.NewMessage(ic.chatID, invalidRequest)
 }
 

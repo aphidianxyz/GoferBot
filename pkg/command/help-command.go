@@ -14,6 +14,12 @@ type HelpCommand struct {
     sendConfig telebot.Chattable
 }
 
+const (
+	invalidCmdMsgPrefix = "Error: command: \""
+	invalidCmdMsgSuffix = "\" does not exist"
+)
+
+
 func (hc *HelpCommand) GenerateMessage() {
 	var cmdInfo string
 	trimmed := strings.TrimLeft(hc.request, "/")
@@ -23,7 +29,7 @@ func (hc *HelpCommand) GenerateMessage() {
 		cmdInfo = hc.commandJSON.formatCommandInfo(trimmed)
 	}
 	if cmdInfo == "" {
-		ErrCmdDoesntExist := fmt.Sprintf("Error: command: \"%v\" does not exist", hc.request)
+		ErrCmdDoesntExist := fmt.Sprintf("%v%v%v", invalidCmdMsgPrefix, hc.request, invalidCmdMsgSuffix)
 		hc.sendConfig = telebot.NewMessage(hc.chatID, ErrCmdDoesntExist)
 		return
 	}

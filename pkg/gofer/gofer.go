@@ -13,20 +13,30 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type Bot interface {
+	Initialize()
+	Update(timeout int)
+}
+
 type Gofer struct {
-    DatabasePath string
-    APIToken string
-    CommandJSONFilePath string
+    databasePath string
+    apiToken string
+    commandJSONFilePath string
 
     commandJSON cmd.CommandJSON
     api *telebot.BotAPI
     db *sql.DB
 }
 
+func CreateBot(databasePath, apiToken, commandJSONPath string) Bot {
+	g := Gofer{databasePath: databasePath, apiToken: apiToken, commandJSONFilePath: commandJSONPath}
+	return &g
+}
+
 func (g *Gofer) Initialize() {
-    g.initAPI(g.APIToken)
-    g.initCommandDescriptions(g.CommandJSONFilePath)
-    g.initDB(g.DatabasePath)
+    g.initAPI(g.apiToken)
+    g.initCommandDescriptions(g.commandJSONFilePath)
+    g.initDB(g.databasePath)
 }
 
 func (g *Gofer) Update(timeout int) {
@@ -40,7 +50,7 @@ func (g *Gofer) Update(timeout int) {
         // check db health
         if errPing := g.db.Ping(); errPing != nil {
             log.Println("Database closed, attempting to reopen...")
-            if err := g.initDB(g.DatabasePath); err != nil {
+            if err := g.initDB(g.databasePath); err != nil {
 				log.Panicln("Failed to reopen database: " + err.Error())
             }
         }
