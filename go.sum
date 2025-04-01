@@ -2,5 +2,7 @@ github.com/OvyFlash/telegram-bot-api v0.0.0-20241219171906-3f2ca0c14ada h1:5Ztie
 github.com/OvyFlash/telegram-bot-api v0.0.0-20241219171906-3f2ca0c14ada/go.mod h1:2nRUdsKyWhvezqW/rBGWEQdcTQeTtnbSNd2dgx76WYA=
 github.com/mattn/go-sqlite3 v1.14.24 h1:tpSp2G2KyMnnQu99ngJ47EIkWVmliIizyZBfPrBWDRM=
 github.com/mattn/go-sqlite3 v1.14.24/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
+go.uber.org/mock v0.5.0 h1:KAMbZvZPyBPWgD14IrIQ38QCyjwpvVVV6K/bHl1IwQU=
+go.uber.org/mock v0.5.0/go.mod h1:ge71pBPLYDk7QIi1LupWxdAykm7KIEFchiOqd6z7qMM=
 gopkg.in/gographics/imagick.v3 v3.7.0 h1:w8iQa58ikuqjX4l2OVML3pgqFcDMD8ywXJ9/cXa33fk=
 gopkg.in/gographics/imagick.v3 v3.7.0/go.mod h1:+Q9nyA2xRZXrDyTtJ/eko+8V/5E7bWYs08ndkZp8UmA=
