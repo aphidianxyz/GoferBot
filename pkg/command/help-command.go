@@ -23,11 +23,7 @@ const (
 func (hc *HelpCommand) GenerateMessage() {
 	var cmdInfo string
 	trimmed := strings.TrimLeft(hc.request, "/")
-	if hc.request == ""{
-		cmdInfo = hc.commandJSON.formatAllCommandInfo()
-	} else {
-		cmdInfo = hc.commandJSON.formatCommandInfo(trimmed)
-	}
+	cmdInfo = hc.commandJSON.formatCommandInfo(trimmed)
 	if cmdInfo == "" {
 		ErrCmdDoesntExist := fmt.Sprintf("%v%v%v", invalidCmdMsgPrefix, hc.request, invalidCmdMsgSuffix)
 		hc.sendConfig = telebot.NewMessage(hc.chatID, ErrCmdDoesntExist)

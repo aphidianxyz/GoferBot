@@ -15,10 +15,12 @@ type CommandInfo struct {
 	CommandName string `json:"commandName"`
 	CommandSyntax string `json:"commandSyntax"`
 	CommandDesc string `json:"commandDesc"`
-	Params []struct {
-		ParamName string `json:"paramName"`
-		ParamDesc string `json:"paramDesc"`
-	} `json:"params"`
+	Params []Param `json:"params"`
+}
+
+type Param struct {
+	ParamName string `json:"paramName"`
+	ParamDesc string `json:"paramDesc"`
 }
 
 func GenerateCommandJSON(commandDescFilePath string) (CommandJSON, error) {
@@ -45,15 +47,12 @@ func (c CommandJSON) findCommand(commandName string) (found []CommandInfo) {
 
 func (c CommandJSON) formatCommandInfo(commandName string) (formatted string) {
 	var commands []CommandInfo
-	commands = c.findCommand(commandName)
-	for _, command := range commands {
-		formatted += format(command)
+	if commandName == "" {
+		commands = c.Commands
+	} else {
+		commands = c.findCommand(commandName)
 	}
-	return formatted
-}
-
-func (c CommandJSON) formatAllCommandInfo() (formatted string) {
-	for _, command := range c.Commands {
+	for _, command := range commands {
 		formatted += format(command)
 	}
 	return formatted

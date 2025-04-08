@@ -1,0 +1,88 @@
+{
+    "commands": [
+        {
+            "commandName": "about",
+            "commandSyntax": "/about",
+            "commandDesc": "describes GoferBot, and links to the project page",
+            "params": null
+        },
+        {
+            "commandName": "caption",
+            "commandSyntax": "/caption [URL] [\"top\"] [\"bot\"]",
+            "commandDesc": "creates a caption meme",
+            "params": [
+                {
+                    "paramName": "URL",
+                    "paramDesc": "a URL pointing to an image"
+                },
+                {
+                    "paramName": "\"top\"",
+                    "paramDesc": "the top caption, encased by quotes"
+                },
+                {
+                    "paramName": "\"bot\"",
+                    "paramDesc": "the bot caption, encased by quotes"
+                }
+            ]
+        },
+        {   
+            "commandName": "caption",
+            "commandSyntax": "/caption (with an attached image) [\"top\"] [\"bot\"]",
+            "commandDesc": "creates a caption meme",
+            "params": [
+                {
+                    "paramName": "\"top\"",
+                    "paramDesc": "the top caption, encased in quotes"
+                },
+                {
+                    "paramName": "\"bot\"",
+                    "paramDesc": "the bot caption, encased in quotes"
+                }
+            ]
+        },
+        {   
+            "commandName": "caption",
+            "commandSyntax": "/caption (while replying to a sticker/image) [\"top\"] [\"bot\"]",
+            "commandDesc": "creates a caption meme",
+            "params": [
+                {
+                    "paramName": "\"top\"",
+                    "paramDesc": "the top caption, encased in quotes"
+                },
+                {
+                    "paramName": "\"bot\"",
+                    "paramDesc": "the bot caption, encased in quotes"
+                }
+            ]
+        },
+        {   
+            "commandName": "everyone",
+            "commandSyntax": "/everyone",
+            "commandDesc": "pings everyone (that has messaged at least once since the bot was added)",
+            "params": null
+        },
+        {   
+            "commandName": "hello",
+            "commandSyntax": "/hello",
+            "commandDesc": "has Goferbot greet you",
+            "params": null
+        },
+        { 
+            "commandName": "help",
+            "commandSyntax": "/help command?",
+            "commandDesc": "lists all commands, what they do and their syntax",
+            "params": [
+                {
+                    "paramName": "command",
+                    "paramDesc": "(optional) a specific command to describe"
+                }
+            ]
+        },
+        {   
+            "commandName": "ping",
+            "commandSyntax": "/ping",
+            "commandDesc": "has GoferBot respond with \"pong\"",
+            "params": null
+        }
+    ]
+}

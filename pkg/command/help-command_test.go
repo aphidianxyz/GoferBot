@@ -20,7 +20,7 @@ func TestSpecificHelpCommandsWSlashes(t *testing.T) {
 func TestAllCommands(t *testing.T) {
 	var chatID int64 = 0
 	cmdJSON := generateCmdJSON(t)
-	msgConfig := telebot.NewMessage(chatID, cmdJSON.formatAllCommandInfo())
+	msgConfig := telebot.NewMessage(chatID, cmdJSON.formatCommandInfo(""))
 	msgConfig.ParseMode = "MarkDown"
 	want := msgConfig
 	
