@@ -57,9 +57,9 @@ func (g *Gofer) Update(timeout int) {
             log.Println(err)
         } 
         if msg.IsCommand() {
-            g.handleCommands(&update)
+            go g.handleCommands(&update)
         } else if msg.Photo != nil { // msg w/ photos have captions, manual parsing required
-            g.handlePhotoCommands(&update)
+            go g.handlePhotoCommands(&update)
         } else { // TODO: handle messages/command requests with a video or gif attached
             // TODO: handle registered responses
         }
