@@ -15,14 +15,10 @@ type PinCommand struct {
 func (pc *PinCommand) GenerateMessage() {
 	var replyTargetID int
 	if pc.msg.ReplyToMessage == nil {
-		if pc.msg.ExternalReply == nil {
-			pc.sendConfig = telebot.NewMessage(pc.msg.Chat.ID, "Please reply to the message you want to pin, with /pin\nReplying to messages before the bot was added without visible chat history will also not work.")
-			return
-		}
-		replyTargetID = pc.msg.ExternalReply.MessageID
-	} else {
-		replyTargetID = pc.msg.ReplyToMessage.MessageID
+		pc.sendConfig = telebot.NewMessage(pc.msg.Chat.ID, "Please reply to the message you want to pin, with /pin\nReplying to messages before the bot was added without visible chat history will also not work.")
+		return
 	}
+	replyTargetID = pc.msg.ReplyToMessage.MessageID
 	msgTokens := strings.Split(pc.msg.Text, " ")
 	notificationFlag := len(msgTokens) > 1 && msgTokens[1] == "-notify"
 	pinConfig := telebot.NewPinChatMessage(pc.msg.Chat.ID, replyTargetID, notificationFlag)
