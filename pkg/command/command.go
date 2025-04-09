@@ -41,6 +41,8 @@ func ParseMsgCommand(api *telebot.BotAPI, chatDB *sql.DB,
             helpRequest = commandParams[0]
         }
 		return &HelpCommand{chatID: msg.Chat.ID, request: helpRequest, commandJSON: commandJSON}
+	case "/pin":
+		return &PinCommand{api: api, msg: *msg}
     case "/ping":
         return &PingCommand{chatID: msg.Chat.ID}
     default:
@@ -72,6 +74,8 @@ func ParseImgCommand(api *telebot.BotAPI, chatDB *sql.DB,
 		return &HelpCommand{chatID: msg.Chat.ID, request: helpRequest, commandJSON: commandJSON}
     case "/everyone":
         return &EveryoneCommand{msg: *msg, db: chatDB}
+	case "/pin":
+		return &PinCommand{api: api, msg: *msg}
     case "/ping":
         return &PingCommand{chatID: msg.Chat.ID}
     default:
