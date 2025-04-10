@@ -13,7 +13,7 @@ docker volume create chats-db
 ```
 Before you can run your own instance of GoferBot, you'll need a Bot API token from Telegram
 
-Get your bot API token by registering a bot instance through the [https://telegram.me/BotFather](BotFather) then set its privacy mode to *DISABLED*
+Get your bot API token by registering a bot instance through the [BotFather](https://telegram.me/BotFather) then set its privacy mode to *DISABLED*
 
 Set your TOKEN environment variable to the API key you've received from the BotFather, then run the bot:
 ```
@@ -27,7 +27,7 @@ Install Go 1.21.X, then ImageMagick 7+ on your system.
 
 Compile a build by running `go build` while in the project root
 
-Get your bot API token by registering a bot instance through the [https://telegram.me/BotFather](BotFather) then set its privacy mode to *DISABLED*
+Get your bot API token by registering a bot instance through the [BotFather](https://telegram.me/BotFather) then set its privacy mode to *DISABLED*
 
 Set your TOKEN environment variable to the API key you've received from the BotFather, then run the bot:
 ```
