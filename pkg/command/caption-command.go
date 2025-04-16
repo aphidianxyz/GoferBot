@@ -64,7 +64,7 @@ func getUrl(prompt string) (string, error) {
         return "", errors.New("No URL provided")
     }
     if _, err := url.ParseRequestURI(tokens[1]); err != nil {
-        return "./tmp/", errors.New("Invalid or malformed URL was inputted")
+        return "", errors.New("Invalid or malformed URL was inputted")
     }
     return tokens[1], nil
 }
