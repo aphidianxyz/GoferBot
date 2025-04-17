@@ -55,7 +55,7 @@ func (cf CommandFactory) CreateCommand(update *telebot.Update) Command {
 	case "/ping":
 		return &PingCommand{chatID: msg.Chat.ID}
 	default:
-		return &InvalidCommand{chatID: msg.Chat.ID, request: cmdName}
+		return &InvalidCommand{msg: *msg, request: cmdName}
 	}
 }
 
@@ -81,7 +81,7 @@ func (cf CommandFactory) createReplyCaptionCommand(msg *telebot.Message) Command
 		}
 	}
 	// TODO: make a command response dedicated to failed commands
-	return &InvalidCommand{chatID: msg.Chat.ID, request: "Unable to caption reply"}
+	return &ErrorCommand{msg: *msg, originCommand: "/caption", error: "Please attach, link or reply to an image to caption it."}
 }
 
 // an empty string request will signal a help command to generate
