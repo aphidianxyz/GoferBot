@@ -74,6 +74,7 @@ func (cf CommandFactory) createReplyCaptionCommand(msg *telebot.Message) Command
 	} else if reply := msg.ReplyToMessage; reply != nil {
 		if reply.Photo != nil {
 			replyMsg := msg.ReplyToMessage
+			replyMsg.MessageID = msg.MessageID
 			replyMsg.Caption = msg.Text
 			return &CaptionImgCommand{api: cf.api, msg: *replyMsg, originalMsg: msg}
 		} else if reply.Sticker != nil {

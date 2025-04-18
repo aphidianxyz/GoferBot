@@ -144,7 +144,7 @@ func userExists(db *sql.DB, chatID, userID int64) bool {
 }
 
 func isCommand(msg *telebot.Message) bool {
-	return msg.IsCommand() || (msg.Photo != nil && strings.Split(msg.Caption, " ")[0][0] == '/')
+	return msg.IsCommand() || (msg.Caption != "" && strings.Split(msg.Caption, " ")[0][0] == '/')
 }
 
 func (g *Gofer) handleCommands(update *telebot.Update) {

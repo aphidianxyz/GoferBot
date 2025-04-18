@@ -73,17 +73,10 @@ func (ci *CaptionImgCommand) SendMessage(api *telebot.BotAPI) error {
     os.Remove(ci.imgFilePath)
     // remove the original request if successful, to declutter the chat
 	if ci.originalMsg != nil {
-		return deleteOriginalMessage(*ci.originalMsg, api)
+		deleteMessage(api, 3 * time.Second, ci.msg.Chat.ID, ci.originalMsg.MessageID)
 	}
-	return deleteOriginalMessage(ci.msg, api)
-}
-
-func deleteOriginalMessage(original telebot.Message, api *telebot.BotAPI) error {
-    deleteConfig := telebot.NewDeleteMessage(original.Chat.ID, original.MessageID)
-    if _, err := api.Request(deleteConfig); err != nil {
-        return err
-    }
-    return nil
+	deleteMessage(api, 3 * time.Second, ci.msg.Chat.ID, ci.msg.MessageID)
+	return nil
 }
 
 func getLargestPhotoID(photoSizes []telebot.PhotoSize) string {

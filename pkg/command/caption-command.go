@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	telebot "github.com/OvyFlash/telegram-bot-api"
 )
@@ -45,14 +46,15 @@ func (ci *CaptionCommand) GenerateMessage() {
 }
 
 func (ci *CaptionCommand) SendMessage(api *telebot.BotAPI) error {
-    if _, err := api.Send(ci.sendConfig); err != nil {
+	if _, err := api.Send(ci.sendConfig); err != nil {
         if ci.imgFilePath != "" {
             os.Remove(ci.imgFilePath)
         }
         return err
     }
     os.Remove(ci.imgFilePath)
-    return deleteOriginalMessage(ci.msg, api)
+    deleteMessage(api, 3 * time.Second, ci.msg.Chat.ID, ci.msg.MessageID)
+	return nil
 
 }
 
