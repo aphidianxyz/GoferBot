@@ -3,6 +3,7 @@ package command
 import (
 	"fmt"
 	"os"
+	"time"
 
 	telebot "github.com/OvyFlash/telegram-bot-api"
 )
@@ -58,5 +59,6 @@ func (cs *CaptionStickerCommand) SendMessage(api *telebot.BotAPI) error {
     }
     os.Remove(cs.imgFilePath)
     // remove the original request if successful, to declutter the chat
-	return deleteOriginalMessage(*cs.originalMsg, api)
+	deleteMessage(api, 3 * time.Second, cs.originalMsg.From.ID, cs.originalMsg.MessageID)
+	return nil
 }

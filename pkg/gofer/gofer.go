@@ -19,6 +19,7 @@ type Gofer struct {
     CommandJSONFilePath string
 
     commandJSON cmd.CommandJSON
+	cmdFactory cmd.CommandFactory
     api *telebot.BotAPI
     db *sql.DB
 }
@@ -27,7 +28,9 @@ func (g *Gofer) Initialize() {
     g.initAPI(g.APIToken)
     g.initCommandDescriptions(g.CommandJSONFilePath)
     g.initDB(g.DatabasePath)
+	g.cmdFactory = cmd.ConstructCommandFactory(g.api, g.db, g.commandJSON)
 }
+
 
 func (g *Gofer) Update(timeout int) {
     defer g.db.Close()
@@ -56,13 +59,9 @@ func (g *Gofer) Update(timeout int) {
         if err := g.recordUser(msg); err != nil {
             log.Println(err)
         } 
-        if msg.IsCommand() {
-            go g.handleCommands(&update)
-        } else if msg.Photo != nil { // msg w/ photos have captions, manual parsing required
-            go g.handlePhotoCommands(&update)
-        } else { // TODO: handle messages/command requests with a video or gif attached
-            // TODO: handle registered responses
-        }
+		if isCommand(msg) {
+			go g.handleCommands(&update)
+		}
     }
 }
 
@@ -144,23 +143,14 @@ func userExists(db *sql.DB, chatID, userID int64) bool {
     return count > 0
 }
 
-func (g *Gofer) handleCommands(update *telebot.Update) {
-    msg := update.Message
-    command := cmd.ParseMsgCommand(g.api, g.db, g.commandJSON, msg)
-    // TODO: this impl currently doesn't support multi-step commands
-    command.GenerateMessage()
-    if err := command.SendMessage(g.api); err != nil {
-        sendError(msg.Chat.ID, err.Error(), g.api)
-        return
-    }
+func isCommand(msg *telebot.Message) bool {
+	return msg.IsCommand() || (msg.Caption != "" && strings.Split(msg.Caption, " ")[0][0] == '/')
 }
 
-func (g *Gofer) handlePhotoCommands(update *telebot.Update) {
+func (g *Gofer) handleCommands(update *telebot.Update) {
     msg := update.Message
-    if !isCaptionCommand(msg.Caption) {
-        return
-    }
-    command := cmd.ParseImgCommand(g.api, g.db, g.commandJSON, msg)
+    command := g.cmdFactory.CreateCommand(update)
+    // TODO: this impl currently doesn't support multi-step commands
     command.GenerateMessage()
     if err := command.SendMessage(g.api); err != nil {
         sendError(msg.Chat.ID, err.Error(), g.api)
