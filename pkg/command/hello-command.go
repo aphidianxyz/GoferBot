@@ -12,10 +12,13 @@ type HelloCommand struct {
     sendConfig telebot.Chattable
 }
 
+func MakeHelloCommand(msg telebot.Message) Command {
+	return &HelloCommand{chatID: msg.Chat.ID, firstName: msg.From.FirstName, lastName: msg.From.LastName, userName: msg.From.UserName}
+}
+
 func (hc *HelloCommand) GenerateMessage() {
     helloString := "Hello, " + hc.firstName + " " + hc.lastName + "!\nAKA: " + hc.userName 
-    config := telebot.NewMessage(hc.chatID, helloString)
-    hc.sendConfig = config 
+    hc.sendConfig = telebot.NewMessage(hc.chatID, helloString)
 } 
 
 func (hc *HelloCommand) SendMessage(api *telebot.BotAPI) error {

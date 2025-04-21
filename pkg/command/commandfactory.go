@@ -46,10 +46,10 @@ func (cf CommandFactory) CreateCommand(update *telebot.Update) Command {
 	case "/everyone":
 		return MakeEveryoneCommand(*msg, cf.chatDB)
 	case "/hello":
-		return &HelloCommand{chatID: msg.Chat.ID, firstName: msg.From.FirstName, lastName: msg.From.LastName, userName: msg.From.UserName}
+		return MakeHelloCommand(*msg)
 	case "/help":
 		helpRequest := getHelpRequest(cmdParams)
-		return &HelpCommand{msg: *msg, request: helpRequest, commandJSON: cf.commandJSON}
+		return MakeHelpCommand(*msg, helpRequest, cf.commandJSON)
 	case "/pin":
 		return &PinCommand{api: cf.api, msg: *msg}
 	case "/ping":
