@@ -9,13 +9,17 @@ import (
 
 type ErrorCommand struct {
 	msg telebot.Message
-	originCommand string
-	error string
+	originCmdName string
+	errMsg string
 	sendConfig telebot.Chattable
 }
 
+func MakeErrorCommand(msg telebot.Message, originCmdName, errMsg string) Command {
+	return &ErrorCommand{msg: msg, originCmdName: originCmdName, errMsg: errMsg}
+}
+
 func (ec *ErrorCommand) GenerateMessage() {
-	errorMessage := ec.originCommand + " failed: " + ec.error
+	errorMessage := ec.originCmdName + " - " + ec.errMsg
 	ec.sendConfig = telebot.NewMessage(ec.msg.Chat.ID, errorMessage)
 }
 

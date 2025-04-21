@@ -13,29 +13,56 @@ import (
 
 type CaptionCommand struct {
     msg telebot.Message
-	url string
     imgFilePath string
     sendConfig telebot.Chattable
 }
 
-func (ci *CaptionCommand) GenerateMessage() {
-	imgFilePath, err := downloadImage(ci.url)
+func MakeCaptionCommand(msg telebot.Message, url string) Command {
+	imgFilePath, err := downloadImage(url)
     if err != nil {
-        ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error())
-        return
+		return MakeErrorCommand(msg, "/caption", "invalid image attachment: " + err.Error())
     }
-	ci.imgFilePath = imgFilePath
     // get captions
-    topCapStr, botCapStr, err := parseCaptions(ci.msg.Text)
+    topCapStr, botCapStr, err := parseCaptions(msg.Text)
     if err != nil {
-        ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error())
-        return
+		os.Remove(imgFilePath)
+		return MakeErrorCommand(msg, "/caption", "failed to parse captions: " + err.Error())
     }
     // generate image
-    if err := captionImage(ci.imgFilePath, topCapStr, botCapStr); err != nil {
-        ci.sendConfig = telebot.NewMessage(ci.msg.Chat.ID, err.Error())
-        return
+    if err := captionImage(imgFilePath, topCapStr, botCapStr); err != nil {
+		os.Remove(imgFilePath)
+		return MakeErrorCommand(msg, "/caption", "failed to draw captions: " + err.Error())
     }
+	return &CaptionCommand{msg: msg, imgFilePath: imgFilePath}
+}
+
+func MakeCaptionStickerCommand(api *telebot.BotAPI, sticker telebot.Sticker, originalMsg *telebot.Message) Command {
+	var imgFilePath string
+	imgFileID := sticker.FileID
+	imgFileURL, err := api.GetFileDirectURL(imgFileID)
+	if err != nil {
+		return MakeErrorCommand(*originalMsg, "caption", "could not retrieve sticker from Telegram: " + err.Error())
+	}
+	imgFilePath, err = downloadImage(imgFileURL)
+	if err != nil {
+		os.Remove(imgFilePath)
+		return MakeErrorCommand(*originalMsg, "caption", "failed to download sticker: " + err.Error())
+	}
+    // get captions
+    topCapStr, botCapStr, err := parseCaptions(originalMsg.Text)
+    if err != nil {
+		os.Remove(imgFilePath)
+		return MakeErrorCommand(*originalMsg, "caption", "could not parse captions: " + err.Error())
+    }
+    // generate image
+    if err := captionImage(imgFilePath, topCapStr, botCapStr); err != nil {
+		os.Remove(imgFilePath)
+		return MakeErrorCommand(*originalMsg, "caption", "could not draw captions: " + err.Error())
+    }
+	return &CaptionCommand{imgFilePath: imgFilePath, msg: *originalMsg}
+}
+
+func (ci *CaptionCommand) GenerateMessage() {
     // generate message
     image := telebot.FilePath(ci.imgFilePath)
     image.UploadData()

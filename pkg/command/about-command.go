@@ -10,6 +10,10 @@ type AboutCommand struct {
 	sendConfig telebot.Chattable
 }
 
+func MakeAboutCommand(chatID int64) Command {
+	return &AboutCommand{chatID: chatID}
+}
+
 func (ac *AboutCommand) GenerateMessage() {
 	aboutMsg := "GoferBot is a telegram chat utility bot!\n\nFor help, message \"/help\"" +
 	"\nTo visit our repo page, go to https://github.com/aphidianxyz/goferbot"
