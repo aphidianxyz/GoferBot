@@ -51,9 +51,9 @@ func (cf CommandFactory) CreateCommand(update *telebot.Update) Command {
 		helpRequest := getHelpRequest(cmdParams)
 		return MakeHelpCommand(*msg, helpRequest, cf.commandJSON)
 	case "/pin":
-		return &PinCommand{api: cf.api, msg: *msg}
+		return MakePinCommand(*msg)
 	case "/ping":
-		return &PingCommand{chatID: msg.Chat.ID}
+		return MakePingCommand(*msg)
 	default:
 		return &InvalidCommand{msg: *msg, request: cmdName}
 	}
