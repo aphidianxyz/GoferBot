@@ -55,7 +55,7 @@ func (cf CommandFactory) CreateCommand(update *telebot.Update) Command {
 	case "/ping":
 		return MakePingCommand(*msg)
 	default:
-		return &InvalidCommand{msg: *msg, request: cmdName}
+		return MakeErrorCommand(*msg, cmdName, "is not a valid command!\nCall /help for a list of commands!")
 	}
 }
 

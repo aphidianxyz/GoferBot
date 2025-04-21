@@ -27,7 +27,7 @@ func (ec *ErrorCommand) SendMessage(api *telebot.BotAPI) error {
 	var msg telebot.Message
 	var err error
     if msg, err = api.Send(ec.sendConfig); err != nil {
-        return errors.New("Failed to send an InvalidCommand")
+        return errors.New("Failed to send an ErrorCommand")
     }
 	deleteMessage(api, 10 * time.Second, ec.msg.Chat.ID, ec.msg.MessageID)
 	deleteMessage(api, 10 * time.Second, ec.msg.Chat.ID, msg.MessageID)
