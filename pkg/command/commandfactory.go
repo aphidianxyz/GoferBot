@@ -44,7 +44,7 @@ func (cf CommandFactory) CreateCommand(update *telebot.Update) Command {
 		}
 		return MakeCaptionCommand(*msg, url)
 	case "/everyone":
-		return &EveryoneCommand{msg: *msg, db: cf.chatDB}
+		return MakeEveryoneCommand(*msg, cf.chatDB)
 	case "/hello":
 		return &HelloCommand{chatID: msg.Chat.ID, firstName: msg.From.FirstName, lastName: msg.From.LastName, userName: msg.From.UserName}
 	case "/help":

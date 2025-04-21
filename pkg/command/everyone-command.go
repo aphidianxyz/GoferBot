@@ -8,18 +8,21 @@ import (
 )
 
 type EveryoneCommand struct {
-    msg telebot.Message
-    db *sql.DB
+	msg telebot.Message
+	mentions string // pings
     sendConfig telebot.Chattable
 }
 
-func (ec *EveryoneCommand) GenerateMessage() {
-    mentions, err := ec.generateMentions()
+func MakeEveryoneCommand(msg telebot.Message, db *sql.DB) Command {
+    mentions, err := generateMentions(msg, db)
     if err != nil {
-        ec.sendConfig = telebot.NewMessage(ec.msg.Chat.ID, "Failed to retrieve users from this chat")
+		return MakeErrorCommand(msg, "/everyone", "failed to retrieve users in this chat: " + err.Error())
     }
+	return &EveryoneCommand{msg: msg, mentions: mentions}
+}
 
-    msgConfig := telebot.NewMessage(ec.msg.Chat.ID, mentions)
+func (ec *EveryoneCommand) GenerateMessage() {
+    msgConfig := telebot.NewMessage(ec.msg.Chat.ID, ec.mentions)
     msgConfig.ParseMode = "MarkDown"
     // link /everyone to the reply of the invoked command
     if replyTarget := ec.msg.ReplyToMessage; replyTarget != nil {
@@ -35,10 +38,10 @@ func (ec *EveryoneCommand) SendMessage(api *telebot.BotAPI) error {
     return nil
 }
 
-func (ec *EveryoneCommand) generateMentions() (string, error) {
+func generateMentions(msg telebot.Message, db *sql.DB) (string, error) {
     var mentionsMessage string
     queryStmt := "select * from chats where chatID=?"
-    rows, err := ec.db.Query(queryStmt, ec.msg.Chat.ID)
+    rows, err := db.Query(queryStmt, msg.Chat.ID)
     if err != nil {
         return "", err 
     }
