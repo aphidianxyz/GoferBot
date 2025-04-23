@@ -20,9 +20,8 @@ func ConstructCommandFactory(api *telebot.BotAPI, chatDB *sql.DB, commandJSON Co
 func (cf CommandFactory) CreateCommand(update *telebot.Update) Command {
 	// as of now, all commands only need messages
 	msg := update.Message
-	// cmds should only appear on the first line
+	// cmds and their param(s) should only appear on the first line
 	var msgStr string = strings.Split(msg.Text, "\n")[0]
-	// TODO: trying to call a cmd with video or other attachments fail 
 	if msg.Photo != nil || msg.Video != nil || msg.Animation != nil ||
 	msg.Document != nil || msg.Voice != nil {
 		msgStr = strings.Split(msg.Caption, "\n")[0]
@@ -33,55 +32,55 @@ func (cf CommandFactory) CreateCommand(update *telebot.Update) Command {
 
 	switch cmdName {
 	case "/about":
-		return MakeAboutCommand(msg.Chat.ID)
+		return MakeAbout(msg.Chat.ID)
 	case "/caption":
 		if msg.Photo != nil {
-			return MakeCaptionImgCommand(cf.api, *msg, nil)
+			return MakeCaptionURL(cf.api, *msg, nil)
 		}
 		url, err := getUrl(msgStr)
-		if err != nil { // possible reply to an image/sticker
-			return cf.createReplyCaptionCommand(msg)
+		if err != nil {
+			return cf.createReplyCaption(msg)
 		}
-		return MakeCaptionCommand(*msg, url)
+		return MakeCaption(*msg, url)
 	case "/everyone":
-		return MakeEveryoneCommand(*msg, cf.chatDB)
+		return MakeEveryone(*msg, cf.chatDB)
 	case "/hello":
-		return MakeHelloCommand(*msg)
+		return MakeHello(*msg)
 	case "/help":
 		helpRequest := getHelpRequest(cmdParams)
-		return MakeHelpCommand(*msg, helpRequest, cf.commandJSON)
+		return MakeHelp(*msg, helpRequest, cf.commandJSON)
 	case "/pin":
-		return MakePinCommand(*msg)
+		return MakePin(*msg)
 	case "/ping":
-		return MakePingCommand(*msg)
+		return MakePing(*msg)
 	default:
-		return MakeErrorCommand(*msg, cmdName, "is not a valid command!\nCall /help for a list of commands!")
+		return MakeError(*msg, cmdName, "is not a valid command!\nCall /help for a list of commands!")
 	}
 }
 
-func (cf CommandFactory) createReplyCaptionCommand(msg *telebot.Message) Command {
+func (cf CommandFactory) createReplyCaption(msg *telebot.Message) Command {
 	if exReply := msg.ExternalReply; exReply != nil {
 		if exReply.Photo != nil {
 			replyMsg := *msg
 			replyMsg.Photo = msg.ExternalReply.Photo
 			replyMsg.Caption = msg.Text
-			return MakeCaptionImgCommand(cf.api, replyMsg, msg)
+			return MakeCaptionURL(cf.api, replyMsg, msg)
 		} else if exReply.Sticker != nil {
 			// you can't accompany text w/ a sticker, but you can reply to one
 			// which lets you caption a sticker if you reply to it
-			return MakeCaptionStickerCommand(cf.api, *exReply.Sticker, msg)
+			return MakeCaptionSticker(cf.api, *exReply.Sticker, msg)
 		}
 	} else if reply := msg.ReplyToMessage; reply != nil {
 		if reply.Photo != nil {
 			replyMsg := msg.ReplyToMessage
 			replyMsg.MessageID = msg.MessageID
 			replyMsg.Caption = msg.Text
-			return MakeCaptionImgCommand(cf.api, *replyMsg, msg)
+			return MakeCaptionURL(cf.api, *replyMsg, msg)
 		} else if reply.Sticker != nil {
-			return MakeCaptionStickerCommand(cf.api, *reply.Sticker, msg)
+			return MakeCaptionSticker(cf.api, *reply.Sticker, msg)
 		}
 	}
-	return MakeErrorCommand(*msg, "/caption", "Please attach, link or reply to an image to caption it")
+	return MakeError(*msg, "/caption", "Please attach, link or reply to an image to caption it")
 }
 
 // an empty string request will signal a help command to generate

@@ -8,13 +8,13 @@ import (
 	telebot "github.com/OvyFlash/telegram-bot-api"
 )
 
-type HelpCommand struct {
+type Help struct {
 	msg telebot.Message
 	cmdInfo string
 	sendConfig telebot.Chattable
 }
 
-func MakeHelpCommand(msg telebot.Message, request string, commandJSON CommandJSON) Command {
+func MakeHelp(msg telebot.Message, request string, commandJSON CommandJSON) Command {
 	var cmdInfo string
 	trimmed := strings.TrimLeft(request, "/")
 	if request == "" {
@@ -24,18 +24,18 @@ func MakeHelpCommand(msg telebot.Message, request string, commandJSON CommandJSO
 	}
 	if cmdInfo == "" {
 		cmdDoesntExist := fmt.Sprintf("command: \"%v\" does not exist", request)
-		return MakeErrorCommand(msg, "/help", cmdDoesntExist)
+		return MakeError(msg, "/help", cmdDoesntExist)
 	}
-	return &HelpCommand{msg: msg, cmdInfo: cmdInfo}
+	return &Help{msg: msg, cmdInfo: cmdInfo}
 }
 
-func (hc *HelpCommand) GenerateMessage() {
+func (hc *Help) GenerateMessage() {
 	msgConfig := telebot.NewMessage(hc.msg.Chat.ID, hc.cmdInfo) 
 	msgConfig.ParseMode = "MarkDown"
 	hc.sendConfig = msgConfig
 }
 
-func (hc HelpCommand) SendMessage(api *telebot.BotAPI) error {
+func (hc Help) SendMessage(api *telebot.BotAPI) error {
 	var msg telebot.Message
 	var err error
     if msg, err = api.Send(hc.sendConfig); err != nil {

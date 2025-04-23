@@ -7,21 +7,21 @@ import (
 	telebot "github.com/OvyFlash/telegram-bot-api"
 )
 
-type EveryoneCommand struct {
+type Everyone struct {
 	msg telebot.Message
 	mentions string // pings
     sendConfig telebot.Chattable
 }
 
-func MakeEveryoneCommand(msg telebot.Message, db *sql.DB) Command {
+func MakeEveryone(msg telebot.Message, db *sql.DB) Command {
     mentions, err := generateMentions(msg, db)
     if err != nil {
-		return MakeErrorCommand(msg, "/everyone", "failed to retrieve users in this chat: " + err.Error())
+		return MakeError(msg, "/everyone", "failed to retrieve users in this chat: " + err.Error())
     }
-	return &EveryoneCommand{msg: msg, mentions: mentions}
+	return &Everyone{msg: msg, mentions: mentions}
 }
 
-func (ec *EveryoneCommand) GenerateMessage() {
+func (ec *Everyone) GenerateMessage() {
     msgConfig := telebot.NewMessage(ec.msg.Chat.ID, ec.mentions)
     msgConfig.ParseMode = "MarkDown"
     // link /everyone to the reply of the invoked command
@@ -31,7 +31,7 @@ func (ec *EveryoneCommand) GenerateMessage() {
     ec.sendConfig = msgConfig
 }
 
-func (ec *EveryoneCommand) SendMessage(api *telebot.BotAPI) error {
+func (ec *Everyone) SendMessage(api *telebot.BotAPI) error {
     if _, err := api.Send(ec.sendConfig); err != nil {
         return err
     }

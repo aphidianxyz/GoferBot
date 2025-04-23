@@ -7,22 +7,22 @@ import (
 	telebot "github.com/OvyFlash/telegram-bot-api"
 )
 
-type PingCommand struct {
+type Ping struct {
 	msg telebot.Message
     sendConfig telebot.Chattable
 }
 
-func MakePingCommand(msg telebot.Message) Command {
-	return &PingCommand{msg: msg}
+func MakePing(msg telebot.Message) Command {
+	return &Ping{msg: msg}
 }
 
-func (pc *PingCommand) GenerateMessage() {
+func (pc *Ping) GenerateMessage() {
     config := telebot.NewMessage(pc.msg.Chat.ID, "pong!")
 	config.ReplyParameters.MessageID = pc.msg.MessageID
     pc.sendConfig = config
 }
 
-func (pc *PingCommand) SendMessage(api *telebot.BotAPI) error {
+func (pc *Ping) SendMessage(api *telebot.BotAPI) error {
 	var msg telebot.Message
 	var err error
     if msg, err = api.Send(pc.sendConfig); err != nil {

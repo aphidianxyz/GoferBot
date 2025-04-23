@@ -6,20 +6,20 @@ import (
 	telebot "github.com/OvyFlash/telegram-bot-api"
 )
 
-type PinCommand struct {
+type Pin struct {
 	msg telebot.Message
 	sendConfig telebot.Chattable
 }
 
-func MakePinCommand(msg telebot.Message) Command {
+func MakePin(msg telebot.Message) Command {
 	if msg.ReplyToMessage == nil {
 		pinErrStr := "Please reply to the message you want to pin, with /pin\nReplying to messages before the bot was added without visible chat history will also not work."
-		return MakeErrorCommand(msg, "/pin", pinErrStr)
+		return MakeError(msg, "/pin", pinErrStr)
 	}
-	return &PinCommand{msg: msg}
+	return &Pin{msg: msg}
 }
 
-func (pc *PinCommand) GenerateMessage() {
+func (pc *Pin) GenerateMessage() {
 	var replyTargetID int
 	replyTargetID = pc.msg.ReplyToMessage.MessageID
 	msgTokens := strings.Split(pc.msg.Text, " ")
@@ -28,7 +28,7 @@ func (pc *PinCommand) GenerateMessage() {
 	pc.sendConfig = pinConfig
 }
 
-func (pc PinCommand) SendMessage(api *telebot.BotAPI) error {
+func (pc Pin) SendMessage(api *telebot.BotAPI) error {
     if _, err := api.Request(pc.sendConfig); err != nil {
         return err
     }

@@ -15,69 +15,69 @@ import (
 	im "gopkg.in/gographics/imagick.v3/imagick"
 )
 
-type CaptionImgCommand struct {
+type CaptionURL struct {
     msg telebot.Message
 	originalMsg *telebot.Message
     imgFilePath string
     sendConfig telebot.Chattable
 }
 
-func MakeCaptionImgCommand(api *telebot.BotAPI, msg telebot.Message, originalMsg *telebot.Message) Command {
+func MakeCaptionURL(api *telebot.BotAPI, msg telebot.Message, originalMsg *telebot.Message) Command {
 	var imgFilePath string
     // get image from message 
     imgFileID := getLargestPhotoID(msg.Photo)
     imgFileURL, err := api.GetFileDirectURL(imgFileID)
     if err != nil {
-        return MakeErrorCommand(msg, "/caption", "could not retrieve image URL from Telegram " + err.Error())
+        return MakeError(msg, "/caption", "could not retrieve image URL from Telegram " + err.Error())
     }
     imgFilePath, err = downloadImage(imgFileURL)
     if err != nil {
 		os.Remove(imgFilePath)
-		return MakeErrorCommand(msg, "/caption", "failed to download image: " + err.Error())
+		return MakeError(msg, "/caption", "failed to download image: " + err.Error())
     }
     // get captions
     topCapStr, botCapStr, err := parseCaptions(msg.Caption)
     if err != nil {
 		os.Remove(imgFilePath)
-		return MakeErrorCommand(msg, "/caption", "could not parse captions: " + err.Error())
+		return MakeError(msg, "/caption", "could not parse captions: " + err.Error())
     }
     // generate image
     if err := captionImage(imgFilePath, topCapStr, botCapStr); err != nil {
 		os.Remove(imgFilePath)
-		return MakeErrorCommand(msg, "/caption", "could not draw captions: " + err.Error())
+		return MakeError(msg, "/caption", "could not draw captions: " + err.Error())
     }
-	return &CaptionImgCommand{msg: msg, imgFilePath: imgFilePath, originalMsg: originalMsg}
+	return &CaptionURL{msg: msg, imgFilePath: imgFilePath, originalMsg: originalMsg}
 }
 
-func (ci *CaptionImgCommand) GenerateMessage() {
+func (c *CaptionURL) GenerateMessage() {
     // generate message
-    image := telebot.FilePath(ci.imgFilePath)
+    image := telebot.FilePath(c.imgFilePath)
     image.UploadData()
-    photoConfig := telebot.NewPhoto(ci.msg.Chat.ID, image)
-	recipientID := ci.msg.From.ID
-	recipientName := ci.msg.From.FirstName
-	if ci.originalMsg != nil {
-		recipientName = ci.originalMsg.From.FirstName
-		recipientID = ci.originalMsg.From.ID
+    photoConfig := telebot.NewPhoto(c.msg.Chat.ID, image)
+	recipientID := c.msg.From.ID
+	recipientName := c.msg.From.FirstName
+	if c.originalMsg != nil {
+		recipientName = c.originalMsg.From.FirstName
+		recipientID = c.originalMsg.From.ID
 	}
 	photoConfig.Caption = "Here's your meme!\n" + fmt.Sprintf("[%v](tg://user?id=%v)", recipientName, recipientID)
 	photoConfig.ParseMode = "MarkDown"
-    ci.sendConfig = photoConfig
+    c.sendConfig = photoConfig
 }
 
-func (ci *CaptionImgCommand) SendMessage(api *telebot.BotAPI) error {
-    if _, err := api.Send(ci.sendConfig); err != nil {
-        if ci.imgFilePath != "" {
-            os.Remove(ci.imgFilePath)
+func (c *CaptionURL) SendMessage(api *telebot.BotAPI) error {
+    if _, err := api.Send(c.sendConfig); err != nil {
+        if c.imgFilePath != "" {
+            os.Remove(c.imgFilePath)
         }
         return err
     }
-    os.Remove(ci.imgFilePath)
+    os.Remove(c.imgFilePath)
     // remove the original request if successful, to declutter the chat
-	if ci.originalMsg != nil {
-		deleteMessage(api, 3 * time.Second, ci.msg.Chat.ID, ci.originalMsg.MessageID)
+	if c.originalMsg != nil {
+		deleteMessage(api, 3 * time.Second, c.msg.Chat.ID, c.originalMsg.MessageID)
 	}
-	deleteMessage(api, 3 * time.Second, ci.msg.Chat.ID, ci.msg.MessageID)
+	deleteMessage(api, 3 * time.Second, c.msg.Chat.ID, c.msg.MessageID)
 	return nil
 }
 
@@ -198,4 +198,3 @@ func genUniqueFileName() string {
     filename := fmt.Sprintf("./tmp/%x.png", hash.Sum32()) // Direct hex format, handles error internally
     return filename
 }
-
