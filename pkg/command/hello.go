@@ -6,19 +6,22 @@ import (
     telebot "github.com/OvyFlash/telegram-bot-api"
 )
 
-type HelloCommand struct {
+type Hello struct {
     chatID int64
     firstName, lastName, userName string
     sendConfig telebot.Chattable
 }
 
-func (hc *HelloCommand) GenerateMessage() {
+func MakeHello(msg telebot.Message) Command {
+	return &Hello{chatID: msg.Chat.ID, firstName: msg.From.FirstName, lastName: msg.From.LastName, userName: msg.From.UserName}
+}
+
+func (hc *Hello) GenerateMessage() {
     helloString := "Hello, " + hc.firstName + " " + hc.lastName + "!\nAKA: " + hc.userName 
-    config := telebot.NewMessage(hc.chatID, helloString)
-    hc.sendConfig = config 
+    hc.sendConfig = telebot.NewMessage(hc.chatID, helloString)
 } 
 
-func (hc *HelloCommand) SendMessage(api *telebot.BotAPI) error {
+func (hc *Hello) SendMessage(api *telebot.BotAPI) error {
     if _, err := api.Send(hc.sendConfig); err != nil {
         return errors.New("Failed to send a HelloCommand")
     }
