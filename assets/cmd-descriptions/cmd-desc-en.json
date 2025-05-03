@@ -78,6 +78,56 @@
                 }
             ]
         },
+        {
+            "commandName": "creategroup",
+            "commandSyntax": "/creategroup [name]",
+            "commandDesc": "creates a group, which can be pinged using /mention",
+            "params": [
+                {
+                    "paramName": "groupName",
+                    "paramDesc": "a name to assign to a new group"
+                }
+            ]
+        },
+        {
+            "commandName": "join",
+            "commandSyntax": "/join [group]",
+            "commandDesc": "join a specified group",
+            "params": [
+                {
+                    "paramName": "group",
+                    "paramDesc": "the name of the group to join"
+                }
+            ]
+        },
+        {
+            "commandName": "leave",
+            "commandSyntax": "/leave [group]",
+            "commandDesc": "leave a specified group",
+            "params": [
+                {
+                    "paramName": "group",
+                    "paramDesc": "the name of the group to join"
+                }
+            ]
+        },
+        {
+            "commandName": "groups",
+            "commandSyntax": "/groups",
+            "commandDesc": "lists all the groups in the current chat",
+            "params": null
+        },
+        {
+            "commandName": "mention",
+            "commandSyntax": "/mention [group]",
+            "commandDesc": "pings all users in a group",
+            "params": [
+                {
+                    "paramName": "group",
+                    "paramDesc": "the name of the group to ping"
+                }
+            ]
+        },
         {   
             "commandName": "pin",
             "commandSyntax": "/pin (while replying to a message) -notify",
